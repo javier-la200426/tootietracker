@@ -42,10 +42,15 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
   const topTriggers = getTopTriggers(3);
   const smartSuggestion = getSmartSuggestion();
   
-  // Combine common triggers with top user triggers, avoiding duplicates
+  // Get default triggers (first 5) and top user triggers, avoiding duplicates
+  const defaultTriggerIds = ['1', '2', '3', '4', '5']; // IDs of default triggers
+  const defaultTriggers = settings.customTriggers.filter(t => defaultTriggerIds.includes(t.id));
+  const userTriggers = topTriggers.filter(t => !defaultTriggerIds.includes(t.id));
+  
+  // Combine default triggers with top user triggers
   const suggestedTriggers = [
-    ...settings.customTriggers.filter(t => ['common-1', 'common-2', 'common-3', 'common-4'].includes(t.id)),
-    ...topTriggers.filter(t => !['common-1', 'common-2', 'common-3', 'common-4'].includes(t.id))
+    ...defaultTriggers,
+    ...userTriggers
   ].slice(0, 6);
 
   const handleTriggerToggle = (trigger: Trigger) => {
@@ -97,7 +102,8 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
   };
 
   const handleSubmit = () => {
-    console.log('Submitting with smell intensity:', selectedSmellIntensity); // Debug log
+    console.log('TriggerModal handleSubmit eventId:', eventId); // Debug log
+    console.log('TriggerModal handleSubmit selectedSmellIntensity:', selectedSmellIntensity); // Debug log
     updateEventTriggers(eventId, selectedTriggers, selectedSmellIntensity);
     onClose();
   };
@@ -136,13 +142,14 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
           animate={{ y: 0, x: '-50%' }}
           exit={{ y: '100%', x: '-50%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 500 }}
-          className="fixed left-1/2 bottom-16 w-full max-w-md bg-white rounded-t-3xl max-h-[80vh] overflow-y-auto z-50"
+          className="fixed left-1/2 bottom-16 w-full max-w-md bg-white rounded-t-3xl max-h-[85vh] z-50 flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="p-6 pb-20">
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Rate Your Fart</h2>
+              <h2 className="text-xl font-bold text-gray-800">Log Possible Triggers</h2>
               <button
                 onClick={onClose}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -189,34 +196,9 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
               )}
             </div>
 
-            {/* Smart Suggestion */}
-            {smartSuggestion && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl"
-              >
-                <div className="flex items-center space-x-2 mb-2">
-                  <Sparkles size={16} className="text-purple-600" />
-                  <span className="text-sm font-medium text-purple-700">Could it be...?</span>
-                </div>
-                <button
-                  onClick={() => handleTriggerToggle(smartSuggestion)}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
-                    selectedTriggers.find(t => t.id === smartSuggestion.id)
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-purple-50'
-                  }`}
-                >
-                  <span className="text-lg">{smartSuggestion.emoji}</span>
-                  <span className="font-medium">{smartSuggestion.label}</span>
-                </button>
-              </motion.div>
-            )}
-
-            {/* Suggested Triggers */}
+            {/* Exploratory Trigger Prompt */}
             <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-600 mb-3">What caused it?</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-3">What did you eat, drink, or do before this fart? <span className='font-normal'>(Optional)</span></h3>
               <div className="flex flex-wrap gap-2">
                 {suggestedTriggers.map((trigger) => (
                   <motion.button
@@ -233,7 +215,6 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
                     <span className="text-sm font-medium">{trigger.label}</span>
                   </motion.button>
                 ))}
-                
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowCustomForm(true)}
@@ -245,44 +226,14 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
               </div>
             </div>
 
-            {/* Meal Presets */}
-            {settings.presets.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-600 mb-3">Meal Presets</h3>
-                <div className="space-y-2">
-                  {settings.presets.map((preset) => (
-                    <motion.button
-                      key={preset.id}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handlePresetSelect(preset)}
-                      className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-purple-50 transition-colors"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <span className="text-lg">{preset.emoji}</span>
-                        <span className="font-medium text-gray-800">{preset.name}</span>
-                      </div>
-                      <div className="flex space-x-1">
-                        {preset.triggers.slice(0, 3).map((trigger) => (
-                          <span key={trigger.id} className="text-xs">{trigger.emoji}</span>
-                        ))}
-                        {preset.triggers.length > 3 && (
-                          <span className="text-xs text-gray-500">+{preset.triggers.length - 3}</span>
-                        )}
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Custom Trigger Form */}
+            {/* Custom Trigger Form - Moved to appear right below Add Custom button */}
             <AnimatePresence>
               {showCustomForm && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="mb-6 p-4 bg-gray-50 rounded-xl"
+                  className="mb-8 p-4 bg-gray-50 rounded-xl"
                 >
                   <h3 className="text-sm font-medium text-gray-600 mb-3">Add Custom Trigger</h3>
                   <div className="space-y-3">
@@ -324,7 +275,33 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
               )}
             </AnimatePresence>
 
-            {/* Save as Preset */}
+            {/* Selected Triggers Display - Moved above Smart Suggestion */}
+            {selectedTriggers.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-600 mb-3">Selected ({selectedTriggers.length})</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedTriggers.map((trigger) => (
+                    <motion.div
+                      key={trigger.id}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-full"
+                    >
+                      <span className="text-sm">{trigger.emoji}</span>
+                      <span className="text-sm font-medium">{trigger.label}</span>
+                      <button
+                        onClick={() => handleTriggerToggle(trigger)}
+                        className="ml-1 text-purple-200 hover:text-white"
+                      >
+                        <X size={14} />
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Save as Preset - Moved below selected options */}
             {selectedTriggers.length > 1 && (
               <div className="mb-6">
                 {!showPresetForm ? (
@@ -380,45 +357,74 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
               </div>
             )}
 
-            {/* Selected Triggers Display */}
-            {selectedTriggers.length > 0 && (
+            {/* Meal Presets - Moved above Smart Suggestion */}
+            {settings.presets.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-600 mb-3">Selected ({selectedTriggers.length})</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedTriggers.map((trigger) => (
-                    <motion.div
-                      key={trigger.id}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-full"
+                <h3 className="text-sm font-medium text-gray-600 mb-3">Meal Presets</h3>
+                <div className="space-y-2">
+                  {settings.presets.map((preset) => (
+                    <motion.button
+                      key={preset.id}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handlePresetSelect(preset)}
+                      className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-purple-50 transition-colors"
                     >
-                      <span className="text-sm">{trigger.emoji}</span>
-                      <span className="text-sm font-medium">{trigger.label}</span>
-                      <button
-                        onClick={() => handleTriggerToggle(trigger)}
-                        className="ml-1 text-purple-200 hover:text-white"
-                      >
-                        <X size={14} />
-                      </button>
-                    </motion.div>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-lg">{preset.emoji}</span>
+                        <span className="font-medium text-gray-800">{preset.name}</span>
+                      </div>
+                      <div className="flex space-x-1">
+                        {preset.triggers.slice(0, 3).map((trigger) => (
+                          <span key={trigger.id} className="text-xs">{trigger.emoji}</span>
+                        ))}
+                        {preset.triggers.length > 3 && (
+                          <span className="text-xs text-gray-500">+{preset.triggers.length - 3}</span>
+                        )}
+                      </div>
+                    </motion.button>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Smart Suggestion - Moved after Meal Presets */}
+            {smartSuggestion && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 p-4 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl"
+              >
+                <div className="flex items-center space-x-2 mb-2">
+                  <Sparkles size={16} className="text-purple-600" />
+                  <span className="text-sm font-medium text-purple-700">Could it be...?</span>
+                </div>
+                <button
+                  onClick={() => handleTriggerToggle(smartSuggestion)}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
+                    selectedTriggers.find(t => t.id === smartSuggestion.id)
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-purple-50'
+                  }`}
+                >
+                  <span className="text-lg">{smartSuggestion.emoji}</span>
+                  <span className="font-medium">{smartSuggestion.label}</span>
+                </button>
+              </motion.div>
+            )}
           </div>
 
-          {/* Action Buttons - Fixed at bottom of modal */}
-          <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 rounded-b-3xl">
+          {/* Fixed Action Buttons - Like a bottom nav bar */}
+          <div className="flex-shrink-0 bg-white border-t border-gray-200 p-3 rounded-b-3xl">
             <div className="flex space-x-3">
               <button
                 onClick={handleSkip}
-                className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
+                className="flex-1 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
               >
                 Skip
               </button>
               <button
                 onClick={handleSubmit}
-                className={`flex-1 py-3 rounded-xl transition-colors font-medium ${
+                className={`flex-1 py-2 rounded-xl transition-colors font-medium ${
                   selectedTriggers.length > 0 || selectedSmellIntensity
                     ? 'bg-purple-600 text-white hover:bg-purple-700'
                     : 'bg-purple-600 text-white hover:bg-purple-700'

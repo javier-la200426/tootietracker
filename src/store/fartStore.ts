@@ -7,7 +7,7 @@ interface FartStore {
   settings: AppSettings;
   
   // Event actions
-  addEvent: (event: Omit<FartEvent, 'id'>) => void;
+  addEvent: (event: Omit<FartEvent, 'id'>) => string;
   updateEventTriggers: (eventId: string, triggers: Trigger[], smellIntensity?: SmellIntensity | null) => void;
   deleteEvent: (id: string) => void;
   clearAllEvents: () => void;
@@ -34,11 +34,13 @@ const defaultTriggers: FoodTrigger[] = [
   { id: '5', name: 'Spicy Food', emoji: '🌶️' },
 ];
 
-const commonTriggers: Trigger[] = [
-  { id: 'common-1', label: 'Beans', emoji: '🌮', count: 0 },
-  { id: 'common-2', label: 'Dairy', emoji: '🧀', count: 0 },
-  { id: 'common-3', label: 'Soda', emoji: '🥤', count: 0 },
-  { id: 'common-4', label: 'Eggs', emoji: '🥚', count: 0 },
+// Convert default triggers to trackable triggers format
+const defaultTrackableTriggers: Trigger[] = [
+  { id: '1', label: 'Beans', emoji: '🫘', count: 0 },
+  { id: '2', label: 'Broccoli', emoji: '🥦', count: 0 },
+  { id: '3', label: 'Onions', emoji: '🧅', count: 0 },
+  { id: '4', label: 'Dairy', emoji: '🥛', count: 0 },
+  { id: '5', label: 'Spicy Food', emoji: '🌶️', count: 0 },
 ];
 
 export const useFartStore = create<FartStore>()(
@@ -49,7 +51,7 @@ export const useFartStore = create<FartStore>()(
         soundEffects: true,
         darkMode: false,
         triggers: defaultTriggers,
-        customTriggers: commonTriggers,
+        customTriggers: defaultTrackableTriggers,
         presets: [],
       },
 
@@ -58,17 +60,20 @@ export const useFartStore = create<FartStore>()(
           id: crypto.randomUUID(),
           ...eventData,
         };
-        console.log('Adding new event:', newEvent); // Debug log
-        set((state) => ({
-          events: [newEvent, ...state.events].slice(0, 1000), // Keep last 1000 events
-        }));
-        
+        console.log('Adding new event in store:', newEvent); // Debug log
+        set((state) => {
+          const updatedEvents = [newEvent, ...state.events].slice(0, 1000);
+          console.log('Events after addEvent:', updatedEvents.map(e => e.id)); // Debug log
+          return {
+            events: updatedEvents,
+          };
+        });
         // Return the ID so it can be used by the caller
         return newEvent.id;
       },
 
       updateEventTriggers: (eventId, triggers, smellIntensity) => {
-        console.log('Updating event triggers:', { eventId, triggers, smellIntensity }); // Debug log
+        console.log('updateEventTriggers called with eventId:', eventId); // Debug log
         set((state) => {
           const updatedEvents = state.events.map((event) => {
             if (event.id === eventId) {
@@ -82,10 +87,9 @@ export const useFartStore = create<FartStore>()(
             }
             return event;
           });
-          console.log('All updated events:', updatedEvents); // Debug log
+          console.log('All updated events after updateEventTriggers:', updatedEvents.map(e => e.id)); // Debug log
           return { events: updatedEvents };
         });
-        
         // Increment trigger counts
         triggers.forEach((trigger) => {
           get().incrementTriggerCount(trigger.id);

@@ -19,8 +19,13 @@ export function Settings() {
 
   const handleAddTrigger = () => {
     if (newTriggerName.trim()) {
+      // Add to both triggers (for settings compatibility) and customTriggers (for tracking)
       addTrigger({
         name: newTriggerName.trim(),
+        emoji: newTriggerEmoji,
+      });
+      addCustomTrigger({
+        label: newTriggerName.trim(),
         emoji: newTriggerEmoji,
       });
       setNewTriggerName('');
@@ -150,17 +155,31 @@ export function Settings() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="bg-white rounded-xl p-6 shadow-sm"
           >
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Food Triggers</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Triggers</h2>
             
             <div className="space-y-3 mb-4">
-              {settings.triggers.map((trigger) => (
+              {settings.customTriggers.map((trigger) => (
                 <div key={trigger.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <span className="text-xl">{trigger.emoji}</span>
-                    <span className="font-medium">{trigger.name}</span>
+                    <span className="font-medium">{trigger.label}</span>
+                    {trigger.count && trigger.count > 0 && (
+                      <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                        {trigger.count}
+                      </span>
+                    )}
                   </div>
                   <button
-                    onClick={() => removeTrigger(trigger.id)}
+                    onClick={() => {
+                      // Remove from both customTriggers and triggers if it's a default trigger
+                      const defaultTriggerIds = ['1', '2', '3', '4', '5'];
+                      if (defaultTriggerIds.includes(trigger.id)) {
+                        removeTrigger(trigger.id);
+                      }
+                      // Remove from customTriggers (this handles both default and custom triggers)
+                      const updatedCustomTriggers = settings.customTriggers.filter(t => t.id !== trigger.id);
+                      updateSettings({ customTriggers: updatedCustomTriggers });
+                    }}
                     className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                   >
                     <Trash2 size={16} />
@@ -196,37 +215,6 @@ export function Settings() {
               </button>
             </div>
           </motion.div>
-
-          {/* Custom Triggers */}
-          {settings.customTriggers.length > 0 && (
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.35 }}
-              className="bg-white rounded-xl p-6 shadow-sm"
-            >
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Smart Triggers</h2>
-              <p className="text-sm text-gray-600 mb-4">Triggers you've added through the Smart Assist</p>
-              
-              <div className="space-y-3">
-                {settings.customTriggers.map((trigger) => (
-                  <div key={trigger.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xl">{trigger.emoji}</span>
-                      <div>
-                        <span className="font-medium">{trigger.label}</span>
-                        {trigger.count && trigger.count > 0 && (
-                          <span className="ml-2 text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
-                            {trigger.count} times
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
 
           {/* Danger Zone */}
           <motion.div

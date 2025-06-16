@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useFartStore } from '../store/fartStore';
 import { useFartIntensity } from '../hooks/useFartIntensity';
 import { TriggerModal } from './TriggerModal';
+import { fartSoundGenerator } from '../utils/soundUtils';
 
 export function FartButton() {
   const [isPressed, setIsPressed] = useState(false);
@@ -11,8 +12,11 @@ export function FartButton() {
   const [lastEventId, setLastEventId] = useState<string | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const soundUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasRecordedRef = useRef<boolean>(false); // Track if we've already recorded for this interaction
   const addEvent = useFartStore((state) => state.addEvent);
+  const settings = useFartStore((state) => state.settings);
+  const updateSettings = useFartStore((state) => state.updateSettings);
   const { getIntensity, getIntensityLabel } = useFartIntensity();
 
   const recordFart = useCallback((durationMs: number) => {
@@ -20,23 +24,18 @@ export function FartButton() {
     if (hasRecordedRef.current) return;
     hasRecordedRef.current = true;
 
-    const eventId = crypto.randomUUID();
     const newEvent = {
-      id: eventId,
       timestamp: new Date(),
       durationMs,
     };
-    
-    console.log('Recording fart event:', newEvent); // Debug log
-    
-    // Add the event to the store
-    addEvent({
-      timestamp: newEvent.timestamp,
-      durationMs: newEvent.durationMs,
-    });
-    
+    console.log('Recording fart event (before addEvent):', newEvent); // Debug log
+
+    // Add the event to the store and get the real ID
+    const realEventId = addEvent(newEvent);
+    console.log('Event ID returned from addEvent:', realEventId); // Debug log
+
     // Show trigger modal after a short delay
-    setLastEventId(eventId);
+    setLastEventId(realEventId);
     setTimeout(() => {
       setShowTriggerModal(true);
     }, 500);
@@ -48,12 +47,29 @@ export function FartButton() {
     hasRecordedRef.current = false; // Reset recording flag
     setDuration(0);
     
+    // Start the sound if enabled
+    if (settings.soundEffects) {
+      fartSoundGenerator.startFartSound().catch(console.warn);
+    }
+    
+    // Update duration display
     intervalRef.current = setInterval(() => {
       if (startTimeRef.current) {
-        setDuration(Date.now() - startTimeRef.current);
+        const currentDuration = Date.now() - startTimeRef.current;
+        setDuration(currentDuration);
       }
     }, 10);
-  }, []);
+
+    // Update sound continuously while pressed
+    if (settings.soundEffects) {
+      soundUpdateIntervalRef.current = setInterval(() => {
+        if (startTimeRef.current) {
+          const currentDuration = Date.now() - startTimeRef.current;
+          fartSoundGenerator.updateFartSound(currentDuration);
+        }
+      }, 50); // Update sound every 50ms
+    }
+  }, [settings.soundEffects]);
 
   const endFart = useCallback(() => {
     if (!startTimeRef.current) return;
@@ -62,9 +78,20 @@ export function FartButton() {
     setIsPressed(false);
     setDuration(0);
     
+    // Stop sound
+    if (settings.soundEffects) {
+      fartSoundGenerator.stopFartSound();
+    }
+    
+    // Clear intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
+    }
+    
+    if (soundUpdateIntervalRef.current) {
+      clearInterval(soundUpdateIntervalRef.current);
+      soundUpdateIntervalRef.current = null;
     }
     
     // Only record if we haven't already recorded and duration is meaningful
@@ -73,7 +100,7 @@ export function FartButton() {
     }
     
     startTimeRef.current = null;
-  }, [recordFart]);
+  }, [recordFart, settings.soundEffects]);
 
   // Handle simple click/tap (for very quick taps)
   const handleClick = useCallback((e: React.MouseEvent) => {
@@ -82,9 +109,13 @@ export function FartButton() {
     
     // Only record a quick tap if we're not in a press interaction and haven't recorded yet
     if (!isPressed && !startTimeRef.current && !hasRecordedRef.current) {
+      // Play quick sound for taps
+      if (settings.soundEffects) {
+        fartSoundGenerator.playQuickFart().catch(console.warn);
+      }
       recordFart(100); // Default 0.1 second for quick taps
     }
-  }, [recordFart, isPressed]);
+  }, [recordFart, isPressed, settings.soundEffects]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -116,11 +147,18 @@ export function FartButton() {
     endFart();
   }, [endFart]);
 
+  const toggleSound = useCallback(() => {
+    updateSettings({ soundEffects: !settings.soundEffects });
+  }, [settings.soundEffects, updateSettings]);
+
   // Cleanup on unmount
   React.useEffect(() => {
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+      }
+      if (soundUpdateIntervalRef.current) {
+        clearInterval(soundUpdateIntervalRef.current);
       }
     };
   }, []);
@@ -158,6 +196,25 @@ export function FartButton() {
   return (
     <>
       <div className="flex flex-col items-center space-y-6">
+        {/* Sound Toggle Button */}
+        <motion.button
+          onClick={toggleSound}
+          whileTap={{ scale: 0.95 }}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${
+            settings.soundEffects 
+              ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
+              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+          }`}
+          title={settings.soundEffects ? 'Sound ON - Click to turn off' : 'Sound OFF - Click to turn on'}
+        >
+          <span className="text-lg">
+            {settings.soundEffects ? '🔊' : '🔇'}
+          </span>
+          <span className="text-sm font-medium">
+            {settings.soundEffects ? 'Sound ON' : 'Sound OFF'}
+          </span>
+        </motion.button>
+
         <div className="relative">
           <motion.div
             className={`
