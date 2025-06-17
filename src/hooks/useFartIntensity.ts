@@ -7,9 +7,8 @@ export function useFartIntensity() {
     if (durationMs >= 2000) return '💥'; // Epic fart (2.0-4.9 seconds)
     if (durationMs >= 1200) return '🔥'; // Strong fart (1.2-2.0 seconds)
     if (durationMs >= 600) return '💨'; // Medium fart (0.6-1.2 seconds)
-    if (durationMs >= 300) return '🌬️'; // Light fart (0.3-0.6 seconds)
-    if (durationMs >= 100) return '🌬️'; // Light fart (0.1-0.3 seconds)
-    return '💭'; // Quick puff (<0.1 seconds)
+    if (durationMs >= 100) return '🌬️'; // Light fart (0.1-0.6 seconds)
+    return '🌬️'; // Light fart (<0.1 seconds)
   };
 
   const getIntensityLabel = (durationMs: number): string => {
@@ -18,9 +17,8 @@ export function useFartIntensity() {
     if (durationMs >= 2000) return 'Epic Fart';
     if (durationMs >= 1200) return 'Strong Fart';
     if (durationMs >= 600) return 'Medium Fart';
-    if (durationMs >= 300) return 'Light Fart';
     if (durationMs >= 100) return 'Light Fart';
-    return 'Quick Puff';
+    return 'Light Fart';
   };
 
   const getIntensityColor = (durationMs: number): string => {
@@ -29,9 +27,8 @@ export function useFartIntensity() {
     if (durationMs >= 2000) return 'text-red-500';     // Epic
     if (durationMs >= 1200) return 'text-orange-500';  // Strong
     if (durationMs >= 600) return 'text-blue-500';     // Medium
-    if (durationMs >= 300) return 'text-green-500';    // Light
     if (durationMs >= 100) return 'text-green-500';    // Light
-    return 'text-gray-500'; // Quick Puff
+    return 'text-green-500'; // Light for <0.1 s too
   };
 
   return { getIntensity, getIntensityLabel, getIntensityColor };

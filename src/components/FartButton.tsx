@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useFartStore } from '../store/fartStore';
 import { useFartIntensity } from '../hooks/useFartIntensity';
 import { TriggerModal } from './TriggerModal';
-import { fartSoundGenerator } from '../utils/soundUtils';
+import { fartAudio } from '../utils/fartAudio';
 
 export function FartButton() {
   const [isPressed, setIsPressed] = useState(false);
@@ -13,6 +13,7 @@ export function FartButton() {
   const startTimeRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const soundUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const soundStartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasRecordedRef = useRef<boolean>(false); // Track if we've already recorded for this interaction
   const addEvent = useFartStore((state) => state.addEvent);
   const settings = useFartStore((state) => state.settings);
@@ -47,11 +48,21 @@ export function FartButton() {
     hasRecordedRef.current = false; // Reset recording flag
     setDuration(0);
     
-    // Start the sound if enabled
+    // Only begin the looping long-fart after a short hold (250 ms)
     if (settings.soundEffects) {
-      fartSoundGenerator.startFartSound().catch(console.warn);
+      soundStartTimeoutRef.current = setTimeout(() => {
+        fartAudio.startFartSound().catch(console.warn);
+
+        // Start sound-update loop once the long fart is playing
+        soundUpdateIntervalRef.current = setInterval(() => {
+          if (startTimeRef.current) {
+            const currentDuration = Date.now() - startTimeRef.current;
+            fartAudio.updateFartSound(currentDuration);
+          }
+        }, 50);
+      }, 500); // delay in ms
     }
-    
+
     // Update duration display
     intervalRef.current = setInterval(() => {
       if (startTimeRef.current) {
@@ -59,16 +70,6 @@ export function FartButton() {
         setDuration(currentDuration);
       }
     }, 10);
-
-    // Update sound continuously while pressed
-    if (settings.soundEffects) {
-      soundUpdateIntervalRef.current = setInterval(() => {
-        if (startTimeRef.current) {
-          const currentDuration = Date.now() - startTimeRef.current;
-          fartSoundGenerator.updateFartSound(currentDuration);
-        }
-      }, 50); // Update sound every 50ms
-    }
   }, [settings.soundEffects]);
 
   const endFart = useCallback(() => {
@@ -78,9 +79,14 @@ export function FartButton() {
     setIsPressed(false);
     setDuration(0);
     
-    // Stop sound
+    // Cancel pending start-sound timeout or stop currently playing sound
     if (settings.soundEffects) {
-      fartSoundGenerator.stopFartSound();
+      if (soundStartTimeoutRef.current) {
+        clearTimeout(soundStartTimeoutRef.current);
+        soundStartTimeoutRef.current = null;
+      }
+      // This is safe to call even if the long sound never started
+      fartAudio.stopFartSound();
     }
     
     // Clear intervals
@@ -94,6 +100,11 @@ export function FartButton() {
       soundUpdateIntervalRef.current = null;
     }
     
+    // Play quick-fart sound for presses shorter than the long-sound delay
+    if (settings.soundEffects && finalDuration < 500) {
+      fartAudio.playQuickFart().catch(console.warn);
+    }
+    
     // Only record if we haven't already recorded and duration is meaningful
     if (!hasRecordedRef.current && finalDuration >= 50) {
       recordFart(finalDuration);
@@ -102,20 +113,11 @@ export function FartButton() {
     startTimeRef.current = null;
   }, [recordFart, settings.soundEffects]);
 
-  // Handle simple click/tap (for very quick taps)
+  // We no longer rely on onClick for quick sounds – see endFart logic
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Only record a quick tap if we're not in a press interaction and haven't recorded yet
-    if (!isPressed && !startTimeRef.current && !hasRecordedRef.current) {
-      // Play quick sound for taps
-      if (settings.soundEffects) {
-        fartSoundGenerator.playQuickFart().catch(console.warn);
-      }
-      recordFart(100); // Default 0.1 second for quick taps
-    }
-  }, [recordFart, isPressed, settings.soundEffects]);
+  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
