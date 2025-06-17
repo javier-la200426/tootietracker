@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -237,6 +238,14 @@ export function WeeklyChart() {
     return currentOffset > 0;
   };
 
+  const handleSwipe = (direction: 'left' | 'right') => {
+    if (direction === 'left' && canNavigateForward()) {
+      setCurrentOffset(prev => prev - 1);
+    } else if (direction === 'right' && canNavigateBack()) {
+      setCurrentOffset(prev => prev + 1);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       {/* Header with title and navigation */}
@@ -289,8 +298,24 @@ export function WeeklyChart() {
         </div>
       </div>
 
-      {/* Chart */}
-      <Line data={data} options={options} />
+      {/* Chart with swipe gestures */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(event: any, info: any) => {
+          const threshold = 50; // Minimum drag distance to trigger navigation
+          if (info.offset.x > threshold) {
+            handleSwipe('right');
+          } else if (info.offset.x < -threshold) {
+            handleSwipe('left');
+          }
+        }}
+        className="cursor-grab active:cursor-grabbing"
+        whileDrag={{ scale: 0.98 }}
+      >
+        <Line data={data} options={options} />
+      </motion.div>
     </div>
   );
 }
@@ -809,6 +834,14 @@ export function SmellTrendChart() {
     return currentOffset > 0;
   };
 
+  const handleSwipeSmell = (direction: 'left' | 'right') => {
+    if (direction === 'left' && canNavigateForward()) {
+      setCurrentOffset(prev => prev - 1);
+    } else if (direction === 'right' && canNavigateBack()) {
+      setCurrentOffset(prev => prev + 1);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       {/* Header with title and navigation */}
@@ -861,8 +894,24 @@ export function SmellTrendChart() {
         </div>
       </div>
 
-      {/* Chart */}
-      <Line data={data} options={options} />
+      {/* Chart with swipe gestures */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(event: any, info: any) => {
+          const threshold = 50; // Minimum drag distance to trigger navigation
+          if (info.offset.x > threshold) {
+            handleSwipeSmell('right');
+          } else if (info.offset.x < -threshold) {
+            handleSwipeSmell('left');
+          }
+        }}
+        className="cursor-grab active:cursor-grabbing"
+        whileDrag={{ scale: 0.98 }}
+      >
+        <Line data={data} options={options} />
+      </motion.div>
     </div>
   );
 }

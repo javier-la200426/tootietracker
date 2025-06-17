@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, TrendingUp, Target, Flame, Wind, DoorClosed as Nose } from 'lucide-react';
 import { StatCard } from '../components/StatCard';
-import { WeeklyChart, TriggerChart, SmellChart, SmellTrendChart } from '../components/Charts';
+import { TriggerChart, SmellChart } from '../components/Charts';
 import { TierReveal } from '../components/TierReveal';
 import { useFartStats } from '../hooks/useFartStats';
+import EChartsActivity from '../components/EChartsActivity';
+import EChartsSmell from '../components/EChartsSmell';
 
 export function Dashboard() {
   const stats = useFartStats();
@@ -58,6 +60,8 @@ export function Dashboard() {
         showAnimation: false,
         fillPercent: 0,
         emoji: '💨',
+        name: 'fart',
+        description: 'gas tracking',
         mysteryText: null,
       };
     }
@@ -283,9 +287,9 @@ export function Dashboard() {
             transition={{ duration: 0.6, delay: 0.7 }}
             className="space-y-6"
           >
-            <WeeklyChart />
+            <EChartsActivity />
             <SmellChart />
-            <SmellTrendChart />
+            <EChartsSmell />
             <TriggerChart />
           </motion.div>
         </div>
