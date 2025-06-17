@@ -10,7 +10,148 @@ interface TriggerModalProps {
   eventId: string;
 }
 
-const emojiOptions = ['🍎', '🍌', '🥕', '🥦', '🧅', '🌶️', '🥛', '🧀', '🍞', '🍝', '🍕', '🌮', '🍔', '🥤', '☕', '🍺', '🍷', '🥚', '🥓', '🫘'];
+const emojiOptions = [
+  // Fruits
+  { emoji: '🍎', label: 'Apple', keywords: ['apple', 'red apple', 'fruit'] },
+  { emoji: '🍏', label: 'Green Apple', keywords: ['green apple', 'apple', 'fruit'] },
+  { emoji: '🍌', label: 'Banana', keywords: ['banana', 'fruit'] },
+  { emoji: '🍊', label: 'Orange', keywords: ['orange', 'tangerine', 'citrus', 'fruit'] },
+  { emoji: '🍋', label: 'Lemon', keywords: ['lemon', 'citrus', 'fruit'] },
+  { emoji: '🍇', label: 'Grapes', keywords: ['grapes', 'fruit', 'wine'] },
+  { emoji: '🍓', label: 'Strawberry', keywords: ['strawberry', 'berry', 'fruit'] },
+  { emoji: '🫐', label: 'Blueberries', keywords: ['blueberries', 'berries', 'fruit'] },
+  { emoji: '🍒', label: 'Cherries', keywords: ['cherries', 'cherry', 'fruit'] },
+  { emoji: '🍑', label: 'Peach', keywords: ['peach', 'fruit'] },
+  { emoji: '🍐', label: 'Pear', keywords: ['pear', 'fruit'] },
+  { emoji: '🥭', label: 'Mango', keywords: ['mango', 'tropical', 'fruit'] },
+  { emoji: '🍍', label: 'Pineapple', keywords: ['pineapple', 'tropical', 'fruit'] },
+  { emoji: '🥝', label: 'Kiwi', keywords: ['kiwi', 'fruit'] },
+  { emoji: '🍉', label: 'Watermelon', keywords: ['watermelon', 'melon', 'fruit'] },
+  { emoji: '🍈', label: 'Melon', keywords: ['melon', 'cantaloupe', 'fruit'] },
+  { emoji: '🥥', label: 'Coconut', keywords: ['coconut', 'tropical', 'fruit'] },
+  { emoji: '🫒', label: 'Olive', keywords: ['olive', 'fruit'] },
+  
+  // Vegetables
+  { emoji: '🍅', label: 'Tomato', keywords: ['tomato', 'vegetable'] },
+  { emoji: '🥕', label: 'Carrot', keywords: ['carrot', 'vegetable'] },
+  { emoji: '🥦', label: 'Broccoli', keywords: ['broccoli', 'vegetable', 'green'] },
+  { emoji: '🥬', label: 'Leafy Greens', keywords: ['lettuce', 'greens', 'salad', 'vegetable', 'leafy'] },
+  { emoji: '🥒', label: 'Cucumber', keywords: ['cucumber', 'vegetable'] },
+  { emoji: '🧅', label: 'Onion', keywords: ['onion', 'vegetable'] },
+  { emoji: '🧄', label: 'Garlic', keywords: ['garlic', 'vegetable'] },
+  { emoji: '🌶️', label: 'Hot Pepper', keywords: ['pepper', 'hot pepper', 'spicy', 'chili', 'vegetable'] },
+  { emoji: '🫑', label: 'Bell Pepper', keywords: ['bell pepper', 'pepper', 'vegetable'] },
+  { emoji: '🌽', label: 'Corn', keywords: ['corn', 'maize', 'vegetable'] },
+  { emoji: '🥔', label: 'Potato', keywords: ['potato', 'vegetable'] },
+  { emoji: '🍆', label: 'Eggplant', keywords: ['eggplant', 'aubergine', 'vegetable'] },
+  { emoji: '🥑', label: 'Avocado', keywords: ['avocado', 'fruit', 'vegetable'] },
+  { emoji: '🍄', label: 'Mushroom', keywords: ['mushroom', 'fungi', 'vegetable'] },
+  { emoji: '🥜', label: 'Peanuts', keywords: ['peanuts', 'nuts', 'legume'] },
+  { emoji: '🫘', label: 'Beans', keywords: ['beans', 'legume', 'vegetable'] },
+  { emoji: '🌰', label: 'Chestnut', keywords: ['chestnut', 'nuts'] },
+  { emoji: '🧅', label: 'Root Vegetable', keywords: ['root', 'vegetable'] },
+  { emoji: '🫛', label: 'Pea Pod', keywords: ['peas', 'pod', 'vegetable'] },
+  { emoji: '🫚', label: 'Ginger', keywords: ['ginger', 'root', 'spice'] },
+  
+  // Prepared Foods
+  { emoji: '🍞', label: 'Bread', keywords: ['bread', 'loaf', 'carb', 'grain'] },
+  { emoji: '🥐', label: 'Croissant', keywords: ['croissant', 'pastry', 'bread'] },
+  { emoji: '🥖', label: 'Baguette', keywords: ['baguette', 'bread', 'french'] },
+  { emoji: '🫓', label: 'Flatbread', keywords: ['flatbread', 'bread', 'pita'] },
+  { emoji: '🥨', label: 'Pretzel', keywords: ['pretzel', 'snack', 'bread'] },
+  { emoji: '🥯', label: 'Bagel', keywords: ['bagel', 'bread'] },
+  { emoji: '🥞', label: 'Pancakes', keywords: ['pancakes', 'breakfast', 'syrup'] },
+  { emoji: '🧇', label: 'Waffle', keywords: ['waffle', 'breakfast', 'syrup'] },
+  { emoji: '🧀', label: 'Cheese', keywords: ['cheese', 'dairy'] },
+  { emoji: '🧈', label: 'Butter', keywords: ['butter', 'dairy'] },
+  { emoji: '🥛', label: 'Milk', keywords: ['milk', 'dairy'] },
+  { emoji: '🥚', label: 'Egg', keywords: ['egg', 'protein'] },
+  { emoji: '🍳', label: 'Cooking', keywords: ['fried egg', 'cooking', 'breakfast'] },
+  { emoji: '🥓', label: 'Bacon', keywords: ['bacon', 'meat', 'breakfast'] },
+  { emoji: '🍖', label: 'Meat', keywords: ['meat', 'bone', 'protein'] },
+  { emoji: '🍗', label: 'Chicken', keywords: ['chicken', 'poultry', 'leg', 'meat'] },
+  { emoji: '🥩', label: 'Steak', keywords: ['steak', 'meat', 'beef'] },
+  { emoji: '🍔', label: 'Hamburger', keywords: ['burger', 'hamburger', 'meat', 'fast food'] },
+  { emoji: '🍟', label: 'Fries', keywords: ['fries', 'french fries', 'potato', 'fast food'] },
+  { emoji: '🍕', label: 'Pizza', keywords: ['pizza', 'cheese', 'italian'] },
+  { emoji: '🌭', label: 'Hot Dog', keywords: ['hot dog', 'sausage', 'meat'] },
+  { emoji: '🥪', label: 'Sandwich', keywords: ['sandwich', 'bread', 'meat'] },
+  { emoji: '🌮', label: 'Taco', keywords: ['taco', 'mexican', 'meat'] },
+  { emoji: '🌯', label: 'Burrito', keywords: ['burrito', 'mexican', 'wrap'] },
+  { emoji: '🫔', label: 'Tamale', keywords: ['tamale', 'mexican', 'corn'] },
+  { emoji: '🥙', label: 'Pita', keywords: ['pita', 'stuffed flatbread', 'bread'] },
+  { emoji: '🧆', label: 'Falafel', keywords: ['falafel', 'middle eastern', 'vegetarian'] },
+  { emoji: '🥘', label: 'Paella', keywords: ['paella', 'pan', 'rice', 'spanish'] },
+  { emoji: '🍲', label: 'Stew', keywords: ['stew', 'pot', 'soup'] },
+  { emoji: '🫕', label: 'Fondue', keywords: ['fondue', 'cheese', 'chocolate'] },
+  { emoji: '🥣', label: 'Bowl', keywords: ['bowl', 'cereal', 'soup'] },
+  { emoji: '🥗', label: 'Salad', keywords: ['salad', 'green', 'healthy'] },
+  { emoji: '🍿', label: 'Popcorn', keywords: ['popcorn', 'snack', 'movie'] },
+  { emoji: '🧂', label: 'Salt', keywords: ['salt', 'seasoning'] },
+  { emoji: '🥫', label: 'Canned Food', keywords: ['canned', 'can', 'preserved'] },
+  
+  // Asian Foods
+  { emoji: '🍱', label: 'Bento', keywords: ['bento', 'japanese', 'lunch box'] },
+  { emoji: '🍘', label: 'Rice Cracker', keywords: ['rice cracker', 'japanese', 'snack'] },
+  { emoji: '🍙', label: 'Rice Ball', keywords: ['rice ball', 'onigiri', 'japanese'] },
+  { emoji: '🍚', label: 'Rice', keywords: ['rice', 'cooked rice', 'grain'] },
+  { emoji: '🍛', label: 'Curry', keywords: ['curry', 'rice', 'indian', 'spicy'] },
+  { emoji: '🍜', label: 'Ramen', keywords: ['ramen', 'noodles', 'soup', 'japanese'] },
+  { emoji: '🍝', label: 'Pasta', keywords: ['pasta', 'spaghetti', 'italian', 'noodles'] },
+  { emoji: '🍠', label: 'Sweet Potato', keywords: ['sweet potato', 'roasted', 'vegetable'] },
+  { emoji: '🍢', label: 'Oden', keywords: ['oden', 'japanese', 'skewer'] },
+  { emoji: '🍣', label: 'Sushi', keywords: ['sushi', 'japanese', 'fish'] },
+  { emoji: '🍤', label: 'Shrimp', keywords: ['shrimp', 'fried shrimp', 'seafood'] },
+  { emoji: '🍥', label: 'Fish Cake', keywords: ['fish cake', 'kamaboko', 'japanese'] },
+  { emoji: '🥮', label: 'Moon Cake', keywords: ['moon cake', 'chinese', 'festival'] },
+  { emoji: '🍡', label: 'Dango', keywords: ['dango', 'japanese', 'sweet'] },
+  { emoji: '🥟', label: 'Dumpling', keywords: ['dumpling', 'chinese', 'steamed'] },
+  { emoji: '🥠', label: 'Fortune Cookie', keywords: ['fortune cookie', 'chinese', 'dessert'] },
+  { emoji: '🥡', label: 'Takeout', keywords: ['takeout', 'chinese', 'box'] },
+  
+  // Seafood
+  { emoji: '🦀', label: 'Crab', keywords: ['crab', 'seafood', 'shellfish'] },
+  { emoji: '🦞', label: 'Lobster', keywords: ['lobster', 'seafood', 'shellfish'] },
+  { emoji: '🦐', label: 'Shrimp', keywords: ['shrimp', 'seafood', 'shellfish'] },
+  { emoji: '🦑', label: 'Squid', keywords: ['squid', 'seafood'] },
+  { emoji: '🦪', label: 'Oyster', keywords: ['oyster', 'seafood', 'shellfish'] },
+  
+  // Sweets & Desserts
+  { emoji: '🍦', label: 'Ice Cream', keywords: ['ice cream', 'soft serve', 'dessert'] },
+  { emoji: '🍧', label: 'Shaved Ice', keywords: ['shaved ice', 'dessert', 'snow cone'] },
+  { emoji: '🍨', label: 'Ice Cream Bowl', keywords: ['ice cream', 'dessert', 'bowl'] },
+  { emoji: '🍩', label: 'Donut', keywords: ['donut', 'doughnut', 'dessert', 'sweet'] },
+  { emoji: '🍪', label: 'Cookie', keywords: ['cookie', 'dessert', 'sweet'] },
+  { emoji: '🎂', label: 'Birthday Cake', keywords: ['birthday cake', 'cake', 'dessert'] },
+  { emoji: '🍰', label: 'Cake', keywords: ['cake', 'shortcake', 'dessert'] },
+  { emoji: '🧁', label: 'Cupcake', keywords: ['cupcake', 'muffin', 'dessert'] },
+  { emoji: '🥧', label: 'Pie', keywords: ['pie', 'dessert'] },
+  { emoji: '🍫', label: 'Chocolate', keywords: ['chocolate', 'bar', 'sweet'] },
+  { emoji: '🍬', label: 'Candy', keywords: ['candy', 'sweet'] },
+  { emoji: '🍭', label: 'Lollipop', keywords: ['lollipop', 'candy', 'sweet'] },
+  { emoji: '🍮', label: 'Custard', keywords: ['custard', 'pudding', 'dessert'] },
+  { emoji: '🍯', label: 'Honey', keywords: ['honey', 'sweet', 'bee'] },
+  
+  // Beverages
+  { emoji: '☕', label: 'Coffee', keywords: ['coffee', 'caffeine', 'hot beverage'] },
+  { emoji: '🫖', label: 'Teapot', keywords: ['teapot', 'tea', 'hot beverage'] },
+  { emoji: '🍵', label: 'Tea', keywords: ['tea', 'green tea', 'hot beverage'] },
+  { emoji: '🥤', label: 'Soda', keywords: ['soda', 'soft drink', 'cup', 'straw'] },
+  { emoji: '🧃', label: 'Juice Box', keywords: ['juice box', 'juice', 'drink'] },
+  { emoji: '🧋', label: 'Bubble Tea', keywords: ['bubble tea', 'boba', 'tea', 'drink'] },
+  { emoji: '🧉', label: 'Mate', keywords: ['mate', 'yerba mate', 'tea'] },
+  { emoji: '🍼', label: 'Baby Bottle', keywords: ['baby bottle', 'milk', 'bottle'] },
+  { emoji: '🍺', label: 'Beer', keywords: ['beer', 'alcohol', 'mug'] },
+  { emoji: '🍻', label: 'Beers', keywords: ['beers', 'cheers', 'alcohol'] },
+  { emoji: '🍷', label: 'Wine', keywords: ['wine', 'alcohol', 'red wine'] },
+  { emoji: '🍾', label: 'Champagne', keywords: ['champagne', 'sparkling wine', 'celebration'] },
+  { emoji: '🍸', label: 'Cocktail', keywords: ['cocktail', 'martini', 'alcohol'] },
+  { emoji: '🍹', label: 'Tropical Drink', keywords: ['tropical drink', 'cocktail', 'vacation'] },
+  { emoji: '🥂', label: 'Champagne Glasses', keywords: ['champagne glasses', 'cheers', 'celebration'] },
+  { emoji: '🥃', label: 'Whiskey', keywords: ['whiskey', 'alcohol', 'tumbler'] },
+  { emoji: '🍶', label: 'Sake', keywords: ['sake', 'japanese', 'alcohol'] },
+  { emoji: '🧊', label: 'Ice', keywords: ['ice', 'cold', 'frozen'] }
+];
 
 const smellIntensityOptions: SmellIntensity[] = [
   { id: 'fresh', label: 'Fresh', emoji: '😇', level: 1 },
@@ -34,10 +175,48 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
   const [selectedSmellIntensity, setSelectedSmellIntensity] = useState<SmellIntensity | null>(null);
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [showPresetForm, setShowPresetForm] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [tooltipEmoji, setTooltipEmoji] = useState<string | null>(null);
   const [customLabel, setCustomLabel] = useState('');
-  const [customEmoji, setCustomEmoji] = useState('🍎');
+  const [customEmoji, setCustomEmoji] = useState('🍽️');
   const [presetName, setPresetName] = useState('');
-  const [presetEmoji, setPresetEmoji] = useState('🍽️');
+
+  // Smart emoji search function
+  const findMatchingEmoji = (inputText: string): string => {
+    if (!inputText || inputText.length < 2) return '🍽️';
+    
+    const text = inputText.toLowerCase().trim();
+    
+    // Find exact label match first
+    const exactMatch = emojiOptions.find(option => 
+      option.label.toLowerCase() === text
+    );
+    if (exactMatch) return exactMatch.emoji;
+    
+    // Find partial label match
+    const partialLabelMatch = emojiOptions.find(option => 
+      option.label.toLowerCase().includes(text) || text.includes(option.label.toLowerCase())
+    );
+    if (partialLabelMatch) return partialLabelMatch.emoji;
+    
+    // Find keyword match
+    const keywordMatch = emojiOptions.find(option => 
+      option.keywords.some(keyword => 
+        keyword.toLowerCase().includes(text) || text.includes(keyword.toLowerCase())
+      )
+    );
+    if (keywordMatch) return keywordMatch.emoji;
+    
+    // No match found, return generic food emoji
+    return '🍽️';
+  };
+
+  // Handle custom label change with smart emoji suggestion
+  const handleCustomLabelChange = (value: string) => {
+    setCustomLabel(value);
+    const suggestedEmoji = findMatchingEmoji(value);
+    setCustomEmoji(suggestedEmoji);
+  };
 
   const topTriggers = getTopTriggers(3);
   const smartSuggestion = getSmartSuggestion();
@@ -91,13 +270,12 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
     const newPreset: Preset = {
       id: crypto.randomUUID(),
       name: presetName.trim(),
-      emoji: presetEmoji,
+      emoji: '🍽️', // Always use plate emoji for meal presets
       triggers: selectedTriggers,
     };
     
     addPreset(newPreset);
     setPresetName('');
-    setPresetEmoji('🍽️');
     setShowPresetForm(false);
   };
 
@@ -119,10 +297,11 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
       setSelectedSmellIntensity(null);
       setShowCustomForm(false);
       setShowPresetForm(false);
+      setShowEmojiPicker(false);
+      setTooltipEmoji(null);
       setCustomLabel('');
-      setCustomEmoji('🍎');
+      setCustomEmoji('🍽️');
       setPresetName('');
-      setPresetEmoji('🍽️');
     }
   }, [isOpen]);
 
@@ -196,6 +375,15 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
               )}
             </div>
 
+            {/* Content that only shows after smell intensity is selected */}
+            <AnimatePresence>
+              {selectedSmellIntensity && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
             {/* Exploratory Trigger Prompt */}
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-600 mb-3">What did you eat, drink, or do before this fart? <span className='font-normal'>(Optional)</span></h3>
@@ -238,23 +426,82 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
                   <h3 className="text-sm font-medium text-gray-600 mb-3">Add Custom Trigger</h3>
                   <div className="space-y-3">
                     <div className="flex space-x-2">
-                      <select
-                        value={customEmoji}
-                        onChange={(e) => setCustomEmoji(e.target.value)}
-                        className="w-16 px-2 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
-                        {emojiOptions.map((emoji) => (
-                          <option key={emoji} value={emoji}>{emoji}</option>
-                        ))}
-                      </select>
+                            {/* Emoji Picker Button and Grid */}
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="w-16 h-12 px-2 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent hover:bg-gray-50 transition-colors"
+                              >
+                                <span className="text-lg">{customEmoji}</span>
+                              </button>
+                              
+                              {/* Emoji Picker Grid */}
+                              <AnimatePresence>
+                                {showEmojiPicker && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute top-14 left-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-64"
+                                  >
+                                    <div className="text-xs text-gray-500 mb-2 font-medium">Select an emoji:</div>
+                                    <div className="grid grid-cols-8 gap-1 max-h-32 overflow-y-auto">
+                                      {emojiOptions.map((option) => (
+                                        <motion.button
+                                          key={option.emoji}
+                                          type="button"
+                                          whileTap={{ scale: 0.95 }}
+                                          onMouseEnter={() => setTooltipEmoji(option.emoji)}
+                                          onMouseLeave={() => setTooltipEmoji(null)}
+                                          onTouchStart={() => setTooltipEmoji(option.emoji)}
+                                          onTouchEnd={() => setTimeout(() => setTooltipEmoji(null), 2000)}
+                                          onClick={() => {
+                                            setCustomEmoji(option.emoji);
+                                            setCustomLabel(option.label);
+                                            setShowEmojiPicker(false);
+                                            setTooltipEmoji(null);
+                                          }}
+                                          className={`relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-100 transition-colors ${
+                                            customEmoji === option.emoji ? 'bg-purple-600 text-white' : 'hover:bg-gray-100'
+                                          }`}
+                                          title={option.label}
+                                        >
+                                          <span className="text-lg">{option.emoji}</span>
+                                          {tooltipEmoji === option.emoji && (
+                                            <motion.div
+                                              initial={{ opacity: 0, y: 5 }}
+                                              animate={{ opacity: 1, y: 0 }}
+                                              className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50"
+                                            >
+                                              {option.label}
+                                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-800"></div>
+                                            </motion.div>
+                                          )}
+                                        </motion.button>
+                                      ))}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                            
                       <input
                         type="text"
                         value={customLabel}
-                        onChange={(e) => setCustomLabel(e.target.value)}
+                              onChange={(e) => handleCustomLabelChange(e.target.value)}
                         placeholder="Food name"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
+                          {customLabel && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {findMatchingEmoji(customLabel) !== '🍽️' 
+                                ? '✨ Smart match found!' 
+                                : '🍽️ Using generic food icon'}
+                            </div>
+                          )}
                     <div className="flex space-x-2">
                       <button
                         onClick={handleAddCustomTrigger}
@@ -264,7 +511,12 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
                         Add
                       </button>
                       <button
-                        onClick={() => setShowCustomForm(false)}
+                              onClick={() => {
+                                setShowCustomForm(false);
+                                setShowEmojiPicker(false);
+                                setCustomLabel('');
+                                setCustomEmoji('🍽️');
+                              }}
                         className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                       >
                         Cancel
@@ -323,17 +575,10 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
                       <div className="flex space-x-2">
                         <input
                           type="text"
-                          value={presetEmoji}
-                          onChange={(e) => setPresetEmoji(e.target.value)}
-                          className="w-16 px-2 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          placeholder="🍽️"
-                        />
-                        <input
-                          type="text"
                           value={presetName}
                           onChange={(e) => setPresetName(e.target.value)}
-                          placeholder="Preset name (e.g., Chipotle Bowl)"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Preset name (e.g., Chipotle Bowl) 🍽️"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         />
                       </div>
                       <div className="flex space-x-2">
@@ -411,6 +656,9 @@ export function TriggerModal({ isOpen, onClose, eventId }: TriggerModalProps) {
                 </button>
               </motion.div>
             )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Fixed Action Buttons - Like a bottom nav bar */}
