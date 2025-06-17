@@ -1,4 +1,7 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import ReactECharts from 'echarts-for-react';
+import * as echarts from 'echarts';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -237,6 +240,14 @@ export function WeeklyChart() {
     return currentOffset > 0;
   };
 
+  const handleSwipe = (direction: 'left' | 'right') => {
+    if (direction === 'left' && canNavigateForward()) {
+      setCurrentOffset(prev => prev - 1);
+    } else if (direction === 'right' && canNavigateBack()) {
+      setCurrentOffset(prev => prev + 1);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       {/* Header with title and navigation */}
@@ -289,8 +300,24 @@ export function WeeklyChart() {
         </div>
       </div>
 
-      {/* Chart */}
-      <Line data={data} options={options} />
+      {/* Chart with swipe gestures */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(event: any, info: any) => {
+          const threshold = 50; // Minimum drag distance to trigger navigation
+          if (info.offset.x > threshold) {
+            handleSwipe('right');
+          } else if (info.offset.x < -threshold) {
+            handleSwipe('left');
+          }
+        }}
+        className="cursor-grab active:cursor-grabbing"
+        whileDrag={{ scale: 0.98 }}
+      >
+        <Line data={data} options={options} />
+      </motion.div>
     </div>
   );
 }
@@ -315,75 +342,129 @@ export function TriggerChart() {
     );
   }
 
-  const data = {
-    labels: topTriggers.map(t => `${t.emoji} ${t.label}`),
-    datasets: [
-      {
-        label: 'Trigger frequency',
-        data: topTriggers.map(t => t.count || 0),
-        backgroundColor: [
-          'rgba(147, 51, 234, 0.8)',
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(16, 185, 129, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
-          'rgba(239, 68, 68, 0.8)',
-        ],
-        borderWidth: 0,
-      },
-    ],
-  };
+  // Enhanced color palette with gradients
+  const colors = [
+    '#9333ea', // Purple
+    '#3b82f6', // Blue  
+    '#10b981', // Green
+    '#f59e0b', // Orange
+    '#ef4444', // Red
+  ];
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        display: false,
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
       },
-      title: {
-        display: false,
-      },
+      formatter: function(params: any) {
+        const data = params[0];
+        return `${data.name}<br/>Frequency: <strong>${data.value}</strong>`;
+      }
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Frequency',
-          font: {
-            size: 14,
-            weight: 'bold' as const,
-            family: 'system-ui, -apple-system, sans-serif',
-          },
-          color: '#374151',
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-        },
-        ticks: {
-          stepSize: 1,
-        },
-      },
-      x: {
-        grid: {
-          display: false,
-        },
-      },
+    grid: { 
+      left: 70, 
+      right: 20, 
+      top: 40, 
+      bottom: 60,
+      containLabel: false
     },
-  };
+    xAxis: {
+      type: 'category',
+      data: topTriggers.map(t => `${t.emoji} ${t.label}`),
+      axisLabel: {
+        interval: 0,
+        rotate: topTriggers.length > 3 ? 45 : 0,
+        fontSize: 12,
+        color: '#6b7280'
+      },
+      axisTick: {
+        alignWithLabel: true
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#e5e7eb'
+        }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: 'Frequency',
+      nameLocation: 'middle',
+      nameGap: 50,
+      nameTextStyle: {
+        rotation: 90,
+        fontSize: 12,
+        color: '#374151',
+        fontWeight: 'bold'
+      },
+      axisLabel: {
+        fontSize: 11,
+        color: '#6b7280'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#f3f4f6',
+          type: 'dashed'
+        }
+      },
+      axisLine: {
+        show: false
+      },
+      axisTick: {
+        show: false
+      }
+    },
+    series: [
+      {
+        type: 'bar',
+        data: topTriggers.map((trigger, index) => ({
+          value: trigger.count || 0,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: colors[index % colors.length] },
+              { offset: 1, color: colors[index % colors.length] + '80' }
+            ]),
+            borderRadius: [4, 4, 0, 0]
+          }
+        })),
+        barWidth: '60%',
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.3)',
+            shadowOffsetY: 5
+          }
+        },
+        animationDelay: function (idx: number) {
+          return idx * 100;
+        }
+      }
+    ],
+    animation: true,
+    animationDuration: 1000,
+    animationEasing: 'cubicOut'
+  } as echarts.EChartsCoreOption;
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">Top Triggers</h3>
-      <Bar data={data} options={options} />
+      <ReactECharts 
+        option={option} 
+        style={{ height: 280 }} 
+        notMerge 
+        lazyUpdate
+        opts={{
+          devicePixelRatio: window.devicePixelRatio,
+          renderer: 'svg'
+        }}
+      />
     </div>
   );
 }
 
 export function SmellChart() {
   const events = useFartStore((state) => state.events);
-  
-  console.log('SmellChart - All events:', events); // Debug log
-  console.log('SmellChart - Events with smell:', events.filter(e => e.smellIntensity)); // Debug log
   
   // Calculate smell distribution from events with smell data
   const smellCounts = {
@@ -396,12 +477,9 @@ export function SmellChart() {
 
   events.forEach((event) => {
     if (event.smellIntensity) {
-      console.log('Found smell data:', event.smellIntensity); // Debug log
       smellCounts[event.smellIntensity.id as keyof typeof smellCounts]++;
     }
   });
-
-  console.log('SmellChart - Smell counts:', smellCounts); // Debug log
 
   const totalWithSmell = Object.values(smellCounts).reduce((sum, count) => sum + count, 0);
 
@@ -419,105 +497,117 @@ export function SmellChart() {
     );
   }
 
-  const data = {
-    labels: ['😇 Fresh', '😊 Light', '😐 Meh', '😬 Stinky', '🤢 Toxic'],
-    datasets: [
-      {
-        data: [
-          smellCounts.fresh,
-          smellCounts.light,
-          smellCounts.meh,
-          smellCounts.stinky,
-          smellCounts.toxic,
-        ],
-        backgroundColor: [
-          'rgba(34, 197, 94, 0.8)',   // Fresh - green
-          'rgba(59, 130, 246, 0.8)',  // Light - blue
-          'rgba(156, 163, 175, 0.8)', // Meh - gray
-          'rgba(245, 158, 11, 0.8)',  // Stinky - orange
-          'rgba(239, 68, 68, 0.8)',   // Toxic - red
-        ],
-        borderColor: [
-          'rgba(34, 197, 94, 1)',
-          'rgba(59, 130, 246, 1)', 
-          'rgba(156, 163, 175, 1)',
-          'rgba(245, 158, 11, 1)',
-          'rgba(239, 68, 68, 1)',
-        ],
-        borderWidth: 2,
-      },
-    ],
-  };
-
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: {
-          padding: 16,
-          usePointStyle: true,
-          pointStyle: 'circle',
-          font: {
-            size: 13,
-            weight: 'normal' as const,
-          },
-          generateLabels: function(chart: any) {
-            const data = chart.data;
-            if (data.labels.length && data.datasets.length) {
-              return data.labels.map((label: string, i: number) => {
-                const count = data.datasets[0].data[i];
-                const percentage = ((count / totalWithSmell) * 100).toFixed(1);
-                return {
-                  text: `${label} (${percentage}%)`,
-                  fillStyle: data.datasets[0].backgroundColor[i],
-                  strokeStyle: data.datasets[0].borderColor[i],
-                  lineWidth: 2,
-                  pointStyle: 'circle',
-                  hidden: false,
-                  index: i
-                };
-              });
-            }
-            return [];
-          }
-        },
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context: any) {
-            const percentage = ((context.parsed / totalWithSmell) * 100).toFixed(1);
-            return `${context.label}: ${context.parsed} farts (${percentage}%)`;
-          },
-        },
-      },
-      // Add data labels plugin for percentages on chart
-      datalabels: {
-        display: function(context: any) {
-          const percentage = ((context.parsed / totalWithSmell) * 100);
-          return percentage >= 5; // Only show labels for segments >= 5%
-        },
-        color: '#ffffff',
-        font: {
-          size: 14,
-          weight: 'bold' as const,
-        },
-        formatter: function(value: number) {
-          const percentage = ((value / totalWithSmell) * 100).toFixed(1);
-          return `${percentage}%`;
-        },
-        anchor: 'center' as const,
-        align: 'center' as const,
-      },
+  // Enhanced smell data with better colors and gradients
+  const smellData = [
+    { 
+      name: '😇 Fresh', 
+      value: smellCounts.fresh,
+      color: ['#22c55e', '#16a34a'] // Green gradient
     },
-    maintainAspectRatio: false,
-  };
+    { 
+      name: '😊 Light', 
+      value: smellCounts.light,
+      color: ['#3b82f6', '#2563eb'] // Blue gradient
+    },
+    { 
+      name: '😐 Meh', 
+      value: smellCounts.meh,
+      color: ['#9ca3af', '#6b7280'] // Gray gradient
+    },
+    { 
+      name: '😬 Stinky', 
+      value: smellCounts.stinky,
+      color: ['#f59e0b', '#d97706'] // Orange gradient
+    },
+    { 
+      name: '🤢 Toxic', 
+      value: smellCounts.toxic,
+      color: ['#ef4444', '#dc2626'] // Red gradient
+    }
+  ].filter(item => item.value > 0); // Only show categories with data
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(params: any) {
+        const percentage = ((params.value / totalWithSmell) * 100).toFixed(1);
+        return `<div style="padding: 8px;">
+          <div style="font-weight: bold; margin-bottom: 4px;">${params.name}</div>
+          <div>Count: <strong>${params.value}</strong> farts</div>
+          <div>Percentage: <strong>${percentage}%</strong></div>
+        </div>`;
+      }
+    },
+    legend: {
+      orient: 'horizontal',
+      top: '78%',
+      left: 'center',
+      itemGap: 20,
+      textStyle: {
+        fontSize: 13,
+        color: '#374151'
+      },
+      formatter: function(name: string) {
+        const item = smellData.find(d => d.name === name);
+        const percentage = item ? ((item.value / totalWithSmell) * 100).toFixed(1) : '0';
+        return `${name} (${percentage}%)`;
+      }
+    },
+    series: [
+      {
+        type: 'pie',
+        radius: ['40%', '70%'], // Donut style
+        center: ['50%', '40%'],
+        data: smellData.map((item, index) => ({
+          name: item.name,
+          value: item.value,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+              { offset: 0, color: item.color[0] },
+              { offset: 1, color: item.color[1] }
+            ]),
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            shadowBlur: 8,
+            shadowColor: 'rgba(0, 0, 0, 0.1)'
+          },
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 15,
+              shadowColor: 'rgba(0, 0, 0, 0.2)',
+              borderWidth: 3,
+              borderColor: '#ffffff'
+            }
+          },
+          label: {
+            show: false
+          }
+        })),
+        animationType: 'scale',
+        animationEasing: 'elasticOut',
+        animationDelay: function (idx: number) {
+          return Math.random() * 200;
+        }
+      }
+    ],
+    animation: true,
+    animationDuration: 1200
+  } as echarts.EChartsCoreOption;
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Smell Profile</h3>
       <div className="h-80">
-        <Doughnut data={data} options={options} plugins={[ChartDataLabels]} />
+        <ReactECharts 
+          option={option} 
+          style={{ height: '100%', width: '100%' }} 
+          notMerge 
+          lazyUpdate
+          opts={{
+            devicePixelRatio: window.devicePixelRatio,
+            renderer: 'svg'
+          }}
+        />
       </div>
     </div>
   );
@@ -809,6 +899,14 @@ export function SmellTrendChart() {
     return currentOffset > 0;
   };
 
+  const handleSwipeSmell = (direction: 'left' | 'right') => {
+    if (direction === 'left' && canNavigateForward()) {
+      setCurrentOffset(prev => prev - 1);
+    } else if (direction === 'right' && canNavigateBack()) {
+      setCurrentOffset(prev => prev + 1);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       {/* Header with title and navigation */}
@@ -861,8 +959,24 @@ export function SmellTrendChart() {
         </div>
       </div>
 
-      {/* Chart */}
-      <Line data={data} options={options} />
+      {/* Chart with swipe gestures */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(event: any, info: any) => {
+          const threshold = 50; // Minimum drag distance to trigger navigation
+          if (info.offset.x > threshold) {
+            handleSwipeSmell('right');
+          } else if (info.offset.x < -threshold) {
+            handleSwipeSmell('left');
+          }
+        }}
+        className="cursor-grab active:cursor-grabbing"
+        whileDrag={{ scale: 0.98 }}
+      >
+        <Line data={data} options={options} />
+      </motion.div>
     </div>
   );
 }
