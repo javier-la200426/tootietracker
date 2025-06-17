@@ -22,6 +22,34 @@ export default function EChartsSmell() {
     { key: 'Y' as const, label: 'Y' },
   ];
 
+  const getNavigationText = () => {
+    const now = new Date();
+    
+    switch (period) {
+      case 'D': {
+        const targetDate = new Date(now.getTime() - offset * 24 * 60 * 60 * 1000);
+        return targetDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+      }
+      case 'W': {
+        const weekStart = new Date(now.getTime() - (offset * 7 + 6) * 24 * 60 * 60 * 1000);
+        return `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+      }
+      case 'M': {
+        const targetMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+        return targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      }
+      case '6M': {
+        const sixMonthsEnd = new Date(now.getFullYear(), now.getMonth() - offset * 6, 1);
+        const sixMonthsStart = new Date(sixMonthsEnd.getFullYear(), sixMonthsEnd.getMonth() - 5, 1);
+        return `${sixMonthsStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${sixMonthsEnd.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+      }
+      case 'Y': {
+        const targetYear = now.getFullYear() - offset;
+        return targetYear.toString();
+      }
+    }
+  };
+
   const DAY = 24 * 60 * 60 * 1000;
 
   const { labels, values } = useMemo(() => {
@@ -112,13 +140,26 @@ export default function EChartsSmell() {
 
   const option = {
     tooltip: { trigger: 'axis' },
-    grid: { left: 60, right: 20, top: 40, bottom: 60 },
+    grid: { left: 70, right: 20, top: 40, bottom: 80 },
     dataZoom: [
       { type: 'inside', xAxisIndex: 0, start: 0, end: 100 },
-      { type: 'slider', xAxisIndex: 0, start: 0, end: 100, height: 20 },
+      { type: 'slider', xAxisIndex: 0, start: 0, end: 100, height: 20, bottom: 10 },
     ],
     xAxis: { type: 'category', data: labels, boundaryGap: false },
-    yAxis: { type: 'value', name: 'Smell Level', min: 0, max: 5 },
+    yAxis: { 
+      type: 'value', 
+      name: 'Smell Level', 
+      min: 0, 
+      max: 5,
+      nameLocation: 'middle',
+      nameGap: 50,
+      nameTextStyle: {
+        rotation: 90,
+        fontSize: 12,
+        color: '#374151',
+        fontWeight: 'bold'
+      },
+    },
     series: [
       {
         type: 'line',
@@ -154,13 +195,23 @@ export default function EChartsSmell() {
           <ChevronLeft />
         </button>
         <span className="text-sm text-gray-600 select-none">
-          {offset === 0 ? 'Current' : `${offset} ${period} ago`}
+          {getNavigationText()}
         </span>
         <button onClick={() => setOffset(Math.max(0, offset - 1))} disabled={offset === 0} className="p-1 rounded disabled:opacity-30">
           <ChevronRight />
         </button>
       </div>
-      <ReactECharts option={option} style={{ height: 280 }} notMerge lazyUpdate key={period} />
+      <ReactECharts 
+        option={option} 
+        style={{ height: 280 }} 
+        notMerge 
+        lazyUpdate 
+        key={period}
+        opts={{
+          devicePixelRatio: window.devicePixelRatio,
+          renderer: 'svg'
+        }}
+      />
     </div>
   );
 } 
