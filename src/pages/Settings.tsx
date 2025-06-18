@@ -127,10 +127,11 @@ export function Settings() {
                       <span className="text-xl">{preset.emoji}</span>
                       <div>
                         <span className="font-medium">{preset.name}</span>
-                        <div className="flex space-x-1 mt-1">
+                        <div className="flex flex-wrap gap-1 mt-1">
                           {preset.triggers.map((trigger) => (
-                            <span key={trigger.id} className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
-                              {trigger.emoji} {trigger.label}
+                            <span key={trigger.id} className="inline-flex items-center text-xs px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full gap-1">
+                              <span className="text-sm">{trigger.emoji}</span>
+                              <span>{trigger.label}</span>
                             </span>
                           ))}
                         </div>
@@ -164,7 +165,7 @@ export function Settings() {
                     <span className="text-xl">{trigger.emoji}</span>
                     <span className="font-medium">{trigger.label}</span>
                     {trigger.count && trigger.count > 0 && (
-                      <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                      <span className="inline-flex items-center text-xs px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full">
                         {trigger.count}
                       </span>
                     )}

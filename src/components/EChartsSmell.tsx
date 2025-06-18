@@ -61,8 +61,9 @@ export default function EChartsSmell() {
 
     switch (period) {
       case 'D': {
+        const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
         for (let i = 23; i >= 0; i--) {
-          const start = new Date(now.getTime() - i * 60 * 60 * 1000);
+          const start = new Date(dayStart.getTime() + (23 - i) * 60 * 60 * 1000);
           const end = new Date(start.getTime() + 60 * 60 * 1000);
           const vals = events
             .filter((e) => {
@@ -76,7 +77,7 @@ export default function EChartsSmell() {
       }
       case 'W': {
         for (let i = 6; i >= 0; i--) {
-          const start = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+          const start = new Date(now.getTime() - (offset*7 + i) * 24 * 60 * 60 * 1000);
           const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
           const vals = events
             .filter((e) => {
@@ -155,10 +156,23 @@ export default function EChartsSmell() {
       nameGap: 50,
       nameTextStyle: {
         rotation: 90,
-        fontSize: 12,
+        fontSize: 16,
         color: '#374151',
         fontWeight: 'bold'
       },
+      axisLabel: {
+        formatter: function(value: number) {
+          return smellLabels[value] || '';
+        },
+        fontSize: 16
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: '#f3f4f6',
+          type: 'dashed'
+        }
+      }
     },
     series: [
       {

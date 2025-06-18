@@ -161,7 +161,7 @@ export default function EChartsActivity() {
       nameGap: 50,
       nameTextStyle: {
         rotation: 90,
-        fontSize: 12,
+        fontSize: 16,
         color: '#374151',
         fontWeight: 'bold'
       },
