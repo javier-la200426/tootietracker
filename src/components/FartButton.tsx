@@ -105,8 +105,8 @@ export function FartButton() {
       fartAudio.playQuickFart().catch(console.warn);
     }
     
-    // Only record if we haven't already recorded and duration is meaningful
-    if (!hasRecordedRef.current && finalDuration >= 50) {
+    // Only record if we haven't already recorded
+    if (!hasRecordedRef.current) {
       recordFart(finalDuration);
     }
     
