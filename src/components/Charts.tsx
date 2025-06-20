@@ -19,6 +19,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { useFartStats } from '../hooks/useFartStats';
 import { useFartStore } from '../store/fartStore';
+import { useStealthMode } from '../contexts/StealthContext';
 
 ChartJS.register(
   CategoryScale,
@@ -34,7 +35,9 @@ ChartJS.register(
 );
 
 export function WeeklyChart() {
+  const { isSecretMode } = useStealthMode();
   const events = useFartStore((state) => state.events);
+  const settings = useFartStore((state) => state.settings);
   const [selectedPeriod, setSelectedPeriod] = React.useState<'D' | 'W' | 'M' | '6M' | 'Y'>('W');
   const [currentOffset, setCurrentOffset] = React.useState(0);
 
@@ -49,7 +52,7 @@ export function WeeklyChart() {
   const getChartData = () => {
     const now = new Date();
     let data: { date: string; count: number }[] = [];
-    let yAxisLabel = 'Farts';
+    let yAxisLabel = isSecretMode ? 'Tasks' : 'Farts';
     let chartTitle = '';
 
     switch (selectedPeriod) {
@@ -60,7 +63,7 @@ export function WeeklyChart() {
         const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
         
         chartTitle = targetDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-        yAxisLabel = 'Farts per Hour';
+        yAxisLabel = isSecretMode ? 'Tasks per Hour' : 'Farts per Hour';
         
         // Create 24 hour buckets
         for (let hour = 0; hour < 24; hour++) {
@@ -81,7 +84,7 @@ export function WeeklyChart() {
       }
       case 'W': {
         // Show daily data for a week (current implementation)
-        yAxisLabel = 'Farts per Day';
+        yAxisLabel = isSecretMode ? 'Tasks per Day' : 'Farts per Day';
         const weekStart = new Date(now.getTime() - (currentOffset * 7 + 6) * 24 * 60 * 60 * 1000);
         chartTitle = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
         
@@ -103,7 +106,7 @@ export function WeeklyChart() {
       }
       case 'M': {
         // Show daily data for a month
-        yAxisLabel = 'Farts per Day';
+        yAxisLabel = isSecretMode ? 'Tasks per Day' : 'Farts per Day';
         const targetMonth = new Date(now.getFullYear(), now.getMonth() - currentOffset, 1);
         const monthStart = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
         const monthEnd = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
@@ -128,7 +131,7 @@ export function WeeklyChart() {
       }
       case '6M': {
         // Show monthly data for 6 months
-        yAxisLabel = 'Farts per Month';
+        yAxisLabel = isSecretMode ? 'Tasks per Month' : 'Farts per Month';
         const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6 - currentOffset * 6, 1);
         chartTitle = `${sixMonthsAgo.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${new Date(sixMonthsAgo.getFullYear(), sixMonthsAgo.getMonth() + 6, 0).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
         
@@ -150,7 +153,7 @@ export function WeeklyChart() {
       }
       case 'Y': {
         // Show monthly data for a year
-        yAxisLabel = 'Farts per Month';
+        yAxisLabel = isSecretMode ? 'Tasks per Month' : 'Farts per Month';
         const targetYear = now.getFullYear() - currentOffset;
         chartTitle = targetYear.toString();
         
@@ -183,8 +186,8 @@ export function WeeklyChart() {
       {
         label: yAxisLabel,
         data: chartData.map(d => d.count),
-        borderColor: 'rgb(147, 51, 234)',
-        backgroundColor: 'rgba(147, 51, 234, 0.1)',
+        borderColor: isSecretMode ? 'rgb(59, 130, 246)' : 'rgb(147, 51, 234)',
+        backgroundColor: isSecretMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(147, 51, 234, 0.1)',
         borderWidth: 3,
         fill: true,
         tension: 0.4,
@@ -213,18 +216,22 @@ export function WeeklyChart() {
             weight: 'bold' as const,
             family: 'system-ui, -apple-system, sans-serif',
           },
-          color: '#374151',
+          color: settings.darkMode ? '#d1d5db' : '#374151',
         },
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
+          color: settings.darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
         },
         ticks: {
           stepSize: 1,
+          color: settings.darkMode ? '#9ca3af' : '#6b7280',
         },
       },
       x: {
         grid: {
           display: false,
+        },
+        ticks: {
+          color: settings.darkMode ? '#9ca3af' : '#6b7280',
         },
       },
     },
@@ -249,29 +256,29 @@ export function WeeklyChart() {
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
       {/* Header with title and navigation */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Activity</h3>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Activity</h3>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setCurrentOffset(prev => prev + 1)}
             disabled={!canNavigateBack()}
-            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <span className="text-sm font-medium text-gray-700 min-w-[120px] text-center">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px] text-center">
             {chartTitle}
           </span>
           <button
             onClick={() => setCurrentOffset(prev => prev - 1)}
             disabled={!canNavigateForward()}
-            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -280,7 +287,7 @@ export function WeeklyChart() {
 
       {/* Period selector */}
       <div className="flex justify-center mb-6">
-        <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           {periods.map((period) => (
             <button
               key={period.key}
@@ -290,8 +297,10 @@ export function WeeklyChart() {
               }}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
                 selectedPeriod === period.key
-                  ? 'bg-white text-purple-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? isSecretMode
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
               }`}
             >
               {period.label}
@@ -323,7 +332,9 @@ export function WeeklyChart() {
 }
 
 export function TriggerChart() {
+  const { isSecretMode } = useStealthMode();
   const getTopTriggers = useFartStore((state) => state.getTopTriggers);
+  const settings = useFartStore((state) => state.settings);
   
   // Get top 5 triggers using the store's aggregated counts
   const topTriggers = getTopTriggers(5);
@@ -331,19 +342,32 @@ export function TriggerChart() {
   // If no triggers, show placeholder
   if (topTriggers.length === 0) {
     return (
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Top Triggers</h3>
-        <div className="text-center text-gray-500 py-8">
-          <p className="text-2xl mb-2">🏷️</p>
-          <p>No triggers logged yet!</p>
-          <p className="text-sm">Add triggers after logging farts to see patterns</p>
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+          {isSecretMode ? 'Top Tools' : 'Top Triggers'}
+        </h3>
+        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+          <p className="text-2xl mb-2">{isSecretMode ? '🛠️' : '🏷️'}</p>
+          <p>{isSecretMode ? 'No tools logged yet!' : 'No triggers logged yet!'}</p>
+          <p className="text-sm">
+            {isSecretMode 
+              ? 'Add tools after logging tasks to see patterns' 
+              : 'Add triggers after logging farts to see patterns'
+            }
+          </p>
         </div>
       </div>
     );
   }
 
   // Enhanced color palette with gradients
-  const colors = [
+  const colors = isSecretMode ? [
+    '#3b82f6', // Blue
+    '#1d4ed8', // Dark Blue
+    '#06b6d4', // Cyan
+    '#0891b2', // Dark Cyan
+    '#6366f1', // Indigo
+  ] : [
     '#9333ea', // Purple
     '#3b82f6', // Blue  
     '#10b981', // Green
@@ -360,6 +384,11 @@ export function TriggerChart() {
       formatter: function(params: any) {
         const data = params[0];
         return `${data.name}<br/>Frequency: <strong>${data.value}</strong>`;
+      },
+      backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+      borderColor: settings.darkMode ? '#4b5563' : '#e5e7eb',
+      textStyle: {
+        color: settings.darkMode ? '#f3f4f6' : '#374151'
       }
     },
     grid: { 
@@ -376,14 +405,14 @@ export function TriggerChart() {
         interval: 0,
         rotate: topTriggers.length > 3 ? 45 : 0,
         fontSize: 12,
-        color: '#6b7280'
+        color: settings.darkMode ? '#9ca3af' : '#6b7280'
       },
       axisTick: {
         alignWithLabel: true
       },
       axisLine: {
         lineStyle: {
-          color: '#e5e7eb'
+          color: settings.darkMode ? '#4b5563' : '#e5e7eb'
         }
       }
     },
@@ -395,16 +424,16 @@ export function TriggerChart() {
       nameTextStyle: {
         rotation: 90,
         fontSize: 16,
-        color: '#374151',
+        color: settings.darkMode ? '#d1d5db' : '#374151',
         fontWeight: 'bold'
       },
       axisLabel: {
         fontSize: 11,
-        color: '#6b7280'
+        color: settings.darkMode ? '#9ca3af' : '#6b7280'
       },
       splitLine: {
         lineStyle: {
-          color: '#f3f4f6',
+          color: settings.darkMode ? '#374151' : '#f3f4f6',
           type: 'dashed'
         }
       },
@@ -447,8 +476,10 @@ export function TriggerChart() {
   } as echarts.EChartsCoreOption;
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Top Triggers</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+        {isSecretMode ? 'Top Tools' : 'Top Triggers'}
+      </h3>
       <ReactECharts 
         option={option} 
         style={{ height: 280 }} 
@@ -464,9 +495,11 @@ export function TriggerChart() {
 }
 
 export function SmellChart() {
+  const { isSecretMode } = useStealthMode();
   const events = useFartStore((state) => state.events);
+  const settings = useFartStore((state) => state.settings);
   
-  // Calculate smell distribution from events with smell data
+  // Calculate smell/difficulty distribution from events with smell data
   const smellCounts = {
     fresh: 0,
     light: 0,
@@ -486,19 +519,52 @@ export function SmellChart() {
   // If no smell data, show placeholder
   if (totalWithSmell === 0) {
     return (
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Smell Profile</h3>
-        <div className="text-center text-gray-500 py-8">
-          <p className="text-2xl mb-2">👃</p>
-          <p>No smell data yet!</p>
-          <p className="text-sm">Rate your farts to see your smell profile</p>
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+          {isSecretMode ? 'Your Difficulty Profile' : 'Your Smell Profile'}
+        </h3>
+        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+          <p className="text-2xl mb-2">{isSecretMode ? '🎯' : '👃'}</p>
+          <p>{isSecretMode ? 'No difficulty data yet!' : 'No smell data yet!'}</p>
+          <p className="text-sm">
+            {isSecretMode 
+              ? 'Rate your tasks to see your difficulty profile' 
+              : 'Rate your farts to see your smell profile'
+            }
+          </p>
         </div>
       </div>
     );
   }
 
-  // Enhanced smell data with better colors and gradients
-  const smellData = [
+  // Enhanced smell/difficulty data with better colors and gradients
+  const smellData = isSecretMode ? [
+    { 
+      name: '😇 Easy', 
+      value: smellCounts.fresh,
+      color: ['#22c55e', '#16a34a'] // Green gradient
+    },
+    { 
+      name: '😊 Simple', 
+      value: smellCounts.light,
+      color: ['#3b82f6', '#2563eb'] // Blue gradient
+    },
+    { 
+      name: '😐 Medium', 
+      value: smellCounts.meh,
+      color: ['#9ca3af', '#6b7280'] // Gray gradient
+    },
+    { 
+      name: '😬 Hard', 
+      value: smellCounts.stinky,
+      color: ['#f59e0b', '#d97706'] // Orange gradient
+    },
+    { 
+      name: '🤢 Extreme', 
+      value: smellCounts.toxic,
+      color: ['#ef4444', '#dc2626'] // Red gradient
+    }
+  ].filter(item => item.value > 0) : [
     { 
       name: '😇 Fresh', 
       value: smellCounts.fresh,
@@ -533,9 +599,14 @@ export function SmellChart() {
         const percentage = ((params.value / totalWithSmell) * 100).toFixed(1);
         return `<div style="padding: 8px;">
           <div style="font-weight: bold; margin-bottom: 4px;">${params.name}</div>
-          <div>Count: <strong>${params.value}</strong> farts</div>
+          <div>Count: <strong>${params.value}</strong> ${isSecretMode ? 'tasks' : 'farts'}</div>
           <div>Percentage: <strong>${percentage}%</strong></div>
         </div>`;
+      },
+      backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+      borderColor: settings.darkMode ? '#4b5563' : '#e5e7eb',
+      textStyle: {
+        color: settings.darkMode ? '#f3f4f6' : '#374151'
       }
     },
     legend: {
@@ -545,7 +616,7 @@ export function SmellChart() {
       itemGap: 20,
       textStyle: {
         fontSize: 13,
-        color: '#374151'
+        color: settings.darkMode ? '#d1d5db' : '#374151'
       },
       formatter: function(name: string) {
         const item = smellData.find(d => d.name === name);
@@ -567,7 +638,7 @@ export function SmellChart() {
               { offset: 1, color: item.color[1] }
             ]),
             borderWidth: 2,
-            borderColor: '#ffffff',
+            borderColor: settings.darkMode ? '#374151' : '#ffffff',
             shadowBlur: 8,
             shadowColor: 'rgba(0, 0, 0, 0.1)'
           },
@@ -576,7 +647,7 @@ export function SmellChart() {
               shadowBlur: 15,
               shadowColor: 'rgba(0, 0, 0, 0.2)',
               borderWidth: 3,
-              borderColor: '#ffffff'
+              borderColor: settings.darkMode ? '#374151' : '#ffffff'
             }
           },
           label: {
@@ -595,8 +666,10 @@ export function SmellChart() {
   } as echarts.EChartsCoreOption;
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Smell Profile</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+        {isSecretMode ? 'Your Difficulty Profile' : 'Your Smell Profile'}
+      </h3>
       <div className="h-80">
         <ReactECharts 
           option={option} 
@@ -614,7 +687,9 @@ export function SmellChart() {
 }
 
 export function SmellTrendChart() {
+  const { isSecretMode } = useStealthMode();
   const events = useFartStore((state) => state.events);
+  const settings = useFartStore((state) => state.settings);
   const [selectedPeriod, setSelectedPeriod] = React.useState<'D' | 'W' | 'M' | '6M' | 'Y'>('W');
   const [currentOffset, setCurrentOffset] = React.useState(0);
 
@@ -777,29 +852,31 @@ export function SmellTrendChart() {
 
   if (!hasData) {
     return (
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
         {/* Header with title and navigation */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Smell Trend</h3>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            {isSecretMode ? 'Difficulty Trend' : 'Smell Trend'}
+          </h3>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setCurrentOffset(prev => prev + 1)}
               disabled={currentOffset >= 24}
-              className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <span className="text-sm font-medium text-gray-700 min-w-[120px] text-center">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px] text-center">
               {chartTitle}
             </span>
             <button
               onClick={() => setCurrentOffset(prev => prev - 1)}
               disabled={currentOffset <= 0}
-              className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -808,7 +885,7 @@ export function SmellTrendChart() {
 
         {/* Period selector */}
         <div className="flex justify-center mb-6">
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             {periods.map((period) => (
               <button
                 key={period.key}
@@ -818,8 +895,10 @@ export function SmellTrendChart() {
                 }}
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
                   selectedPeriod === period.key
-                    ? 'bg-white text-purple-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? isSecretMode
+                      ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                      : 'bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
                 }`}
               >
                 {period.label}
@@ -828,10 +907,12 @@ export function SmellTrendChart() {
           </div>
         </div>
 
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
           <p className="text-2xl mb-2">📈</p>
-          <p>Not enough smell data yet!</p>
-          <p className="text-sm">Rate more farts to see trends</p>
+          <p>{isSecretMode ? 'Not enough difficulty data yet!' : 'Not enough smell data yet!'}</p>
+          <p className="text-sm">
+            {isSecretMode ? 'Rate more tasks to see trends' : 'Rate more farts to see trends'}
+          </p>
         </div>
       </div>
     );
@@ -841,10 +922,10 @@ export function SmellTrendChart() {
     labels: smellData.map(d => d.date),
     datasets: [
       {
-        label: 'Average Smell Level',
+        label: isSecretMode ? 'Average Difficulty Level' : 'Average Smell Level',
         data: smellData.map(d => d.avgSmell),
-        borderColor: 'rgb(239, 68, 68)',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        borderColor: isSecretMode ? 'rgb(59, 130, 246)' : 'rgb(239, 68, 68)',
+        backgroundColor: isSecretMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
         borderWidth: 3,
         fill: true,
         tension: 0.4,
@@ -861,11 +942,18 @@ export function SmellTrendChart() {
       tooltip: {
         callbacks: {
           label: function(context: any) {
-            const smellLabels = ['', 'Fresh', 'Light', 'Meh', 'Stinky', 'Toxic'];
+            const smellLabels = isSecretMode 
+              ? ['', 'Easy', 'Simple', 'Medium', 'Hard', 'Extreme']
+              : ['', 'Fresh', 'Light', 'Meh', 'Stinky', 'Toxic'];
             const level = Math.round(context.parsed.y);
             return `Avg: ${context.parsed.y} (${smellLabels[level] || 'Unknown'})`;
           },
         },
+        backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+        titleColor: settings.darkMode ? '#f3f4f6' : '#374151',
+        bodyColor: settings.darkMode ? '#f3f4f6' : '#374151',
+        borderColor: settings.darkMode ? '#4b5563' : '#e5e7eb',
+        borderWidth: 1,
       },
     },
     scales: {
@@ -873,7 +961,7 @@ export function SmellTrendChart() {
         beginAtZero: true,
         max: 5,
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
+          color: settings.darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
         },
         ticks: {
           stepSize: 1,
@@ -881,11 +969,15 @@ export function SmellTrendChart() {
             const labels = ['', '😇', '😊', '😐', '😬', '🤢'];
             return labels[value] || '';
           },
+          color: settings.darkMode ? '#9ca3af' : '#6b7280',
         },
       },
       x: {
         grid: {
           display: false,
+        },
+        ticks: {
+          color: settings.darkMode ? '#9ca3af' : '#6b7280',
         },
       },
     },
@@ -908,29 +1000,31 @@ export function SmellTrendChart() {
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
       {/* Header with title and navigation */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Smell Trend</h3>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          {isSecretMode ? 'Difficulty Trend' : 'Smell Trend'}
+        </h3>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setCurrentOffset(prev => prev + 1)}
             disabled={!canNavigateBack()}
-            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <span className="text-sm font-medium text-gray-700 min-w-[120px] text-center">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px] text-center">
             {chartTitle}
           </span>
           <button
             onClick={() => setCurrentOffset(prev => prev - 1)}
             disabled={!canNavigateForward()}
-            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -939,7 +1033,7 @@ export function SmellTrendChart() {
 
       {/* Period selector */}
       <div className="flex justify-center mb-6">
-        <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           {periods.map((period) => (
             <button
               key={period.key}
@@ -949,8 +1043,10 @@ export function SmellTrendChart() {
               }}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
                 selectedPeriod === period.key
-                  ? 'bg-white text-purple-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? isSecretMode
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
               }`}
             >
               {period.label}

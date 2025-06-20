@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, TrendingUp, Target, Flame, Wind, DoorClosed as Nose } from 'lucide-react';
+import { Activity, TrendingUp, Target, Flame, Wind, DoorClosed as Nose, CheckSquare, BarChart } from 'lucide-react';
 import { StatCard } from '../components/StatCard';
 import { TriggerChart, SmellChart } from '../components/Charts';
 import { TierReveal } from '../components/TierReveal';
 import { useFartStats } from '../hooks/useFartStats';
+import { useStealthMode } from '../contexts/StealthContext';
 import EChartsActivity from '../components/EChartsActivity';
 import EChartsSmell from '../components/EChartsSmell';
 
 export function Dashboard() {
+  const { isSecretMode } = useStealthMode();
   const stats = useFartStats();
   const [showTierReveal, setShowTierReveal] = useState(false);
   const [lastSeenTier, setLastSeenTier] = useState<string | null>(null);
@@ -59,9 +61,9 @@ export function Dashboard() {
         title: "Start tracking to see your progress!",
         showAnimation: false,
         fillPercent: 0,
-        emoji: '💨',
-        name: 'fart',
-        description: 'gas tracking',
+        emoji: isSecretMode ? '✅' : '💨',
+        name: isSecretMode ? 'task' : 'fart',
+        description: isSecretMode ? 'task tracking' : 'gas tracking',
         mysteryText: null,
       };
     }
@@ -77,7 +79,19 @@ export function Dashboard() {
       elephant: { emoji: '🐘', name: 'elephant', description: 'elephant (gas equivalent)' },
     };
 
-    const config = tierConfig[tier as keyof typeof tierConfig];
+    // Transform for stealth mode
+    const stealthTierConfig = {
+      balloon: { emoji: '📝', name: 'note', description: 'note completion' },
+      bike: { emoji: '📋', name: 'checklist', description: 'checklist completion' },
+      soccer: { emoji: '📊', name: 'report', description: 'report completion' },
+      basket: { emoji: '📈', name: 'presentation', description: 'presentation completion' },
+      car: { emoji: '🎯', name: 'project', description: 'project completion' },
+      cow: { emoji: '🏆', name: 'achievement', description: 'achievement (effort equivalent)' },
+      hippo: { emoji: '🎖️', name: 'medal', description: 'medal (effort equivalent)' },
+      elephant: { emoji: '👑', name: 'crown', description: 'crown (effort equivalent)' },
+    };
+
+    const config = isSecretMode ? stealthTierConfig[tier as keyof typeof stealthTierConfig] : tierConfig[tier as keyof typeof tierConfig];
     const plural = count > 1 ? 's' : '';
     
     // Create mystery text based on progress
@@ -94,10 +108,12 @@ export function Dashboard() {
       mysteryText = "You're about to discover something incredible! 💫";
     }
     
-    // Special messaging for animals vs objects
+    // Special messaging for animals vs objects (or achievements vs tasks in stealth mode)
     const isAnimal = ['cow', 'hippo', 'elephant'].includes(tier);
     const titleText = isAnimal 
-      ? `Gas equivalent of ${count} ${config.name}${plural} this week!`
+      ? isSecretMode
+        ? `Effort equivalent of ${count} ${config.name}${plural} this week!`
+        : `Gas equivalent of ${count} ${config.name}${plural} this week!`
       : `${config.emoji} ${count} ${config.name}${plural} this week!`;
     
     return {
@@ -113,22 +129,36 @@ export function Dashboard() {
 
   const tierDisplay = getTierDisplay();
 
-  // Get smell insights
+  // Get smell/difficulty insights
   const getSmellInsight = () => {
     if (stats.averageSmell === 0) return null;
     
-    const smellLabels = ['', 'Fresh', 'Light', 'Meh', 'Stinky', 'Toxic'];
+    const smellLabels = isSecretMode 
+      ? ['', 'Easy', 'Simple', 'Medium', 'Hard', 'Extreme']
+      : ['', 'Fresh', 'Light', 'Meh', 'Stinky', 'Toxic'];
     const avgLabel = smellLabels[Math.round(stats.averageSmell)] || 'Unknown';
     
     let insight = '';
-    if (stats.averageSmell <= 2) {
-      insight = "You're keeping it fresh! 😇";
-    } else if (stats.averageSmell <= 3) {
-      insight = "Pretty mild overall! 😊";
-    } else if (stats.averageSmell <= 4) {
-      insight = "Getting a bit stinky! 😬";
+    if (isSecretMode) {
+      if (stats.averageSmell <= 2) {
+        insight = "You're keeping it simple! 😇";
+      } else if (stats.averageSmell <= 3) {
+        insight = "Pretty manageable overall! 😊";
+      } else if (stats.averageSmell <= 4) {
+        insight = "Getting challenging! 😬";
+      } else {
+        insight = "Whew, that's intense! 🤢";
+      }
     } else {
-      insight = "Whew, that's potent! 🤢";
+      if (stats.averageSmell <= 2) {
+        insight = "You're keeping it fresh! 😇";
+      } else if (stats.averageSmell <= 3) {
+        insight = "Pretty mild overall! 😊";
+      } else if (stats.averageSmell <= 4) {
+        insight = "Getting a bit stinky! 😬";
+      } else {
+        insight = "Whew, that's potent! 🤢";
+      }
     }
     
     return { avgLabel, insight };
@@ -154,7 +184,11 @@ export function Dashboard() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 pb-20"
+        className={`min-h-screen pb-20 ${
+          isSecretMode 
+            ? 'bg-gradient-to-br from-blue-100 via-indigo-50 to-slate-100 dark:from-blue-900 dark:via-indigo-900 dark:to-slate-900' 
+            : 'bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 dark:from-purple-900 dark:via-blue-900 dark:to-indigo-900'
+        }`}
       >
         <div className="max-w-md mx-auto px-4 pt-8">
           <motion.div
@@ -163,19 +197,26 @@ export function Dashboard() {
             transition={{ duration: 0.6 }}
             className="text-center mb-8"
           >
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Your Stats</h1>
-            <p className="text-gray-600">Track your gaseous achievements</p>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+              {isSecretMode ? 'Your Analytics' : 'Your Stats'}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              {isSecretMode 
+                ? 'Track your productive achievements' 
+                : 'Track your gaseous achievements'
+              }
+            </p>
           </motion.div>
 
-          {/* Gas Ladder Progress */}
+          {/* Gas Ladder Progress / Achievement Progress */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white rounded-xl p-6 shadow-sm mb-6"
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm mb-6"
           >
             <div className="text-center">
-              <p className="text-lg font-semibold text-gray-800 mb-4">
+              <p className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
                 {tierDisplay.title}
               </p>
               
@@ -183,9 +224,17 @@ export function Dashboard() {
                 <>
                   {/* Progress Animation - same style for all tiers */}
                   <div className="relative w-32 h-32 mx-auto mb-4">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-200 to-blue-300 opacity-30"></div>
+                    <div className={`absolute inset-0 rounded-full ${
+                      isSecretMode 
+                        ? 'bg-gradient-to-br from-blue-200 to-indigo-300 dark:from-blue-700 dark:to-indigo-800' 
+                        : 'bg-gradient-to-br from-purple-200 to-blue-300 dark:from-purple-700 dark:to-blue-800'
+                    } opacity-30`}></div>
                     <motion.div
-                      className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-400 to-blue-500"
+                      className={`absolute inset-0 rounded-full ${
+                        isSecretMode 
+                          ? 'bg-gradient-to-br from-blue-400 to-indigo-500 dark:from-blue-500 dark:to-indigo-600' 
+                          : 'bg-gradient-to-br from-purple-400 to-blue-500 dark:from-purple-500 dark:to-blue-600'
+                      }`}
                       initial={{ scale: 0.3 }}
                       animate={{ scale: 0.3 + (tierDisplay.fillPercent / 100) * 0.7 }}
                       transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
@@ -203,15 +252,23 @@ export function Dashboard() {
                       transition={{ duration: 0.8, delay: 1 }}
                       className="space-y-2"
                     >
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
                         <motion.div
-                          className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full"
+                          className={`${
+                            isSecretMode 
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-500' 
+                              : 'bg-gradient-to-r from-purple-500 to-blue-500'
+                          } h-2 rounded-full`}
                           initial={{ width: 0 }}
                           animate={{ width: `${tierDisplay.fillPercent}%` }}
                           transition={{ duration: 1.2, delay: 0.8, ease: "easeOut" }}
                         />
                       </div>
-                      <p className="text-sm font-medium text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+                      <p className={`text-sm font-medium text-transparent bg-clip-text ${
+                        isSecretMode 
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400' 
+                          : 'bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400'
+                      }`}>
                         {tierDisplay.mysteryText}
                       </p>
                     </motion.div>
@@ -221,27 +278,35 @@ export function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Smell Insight Card */}
+          {/* Smell/Difficulty Insight Card */}
           {smellInsight && (
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.25 }}
-              className="bg-gradient-to-r from-pink-100 to-purple-100 rounded-xl p-6 shadow-sm mb-6"
+              className={`${
+                isSecretMode 
+                  ? 'bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-200 dark:from-blue-800 dark:to-indigo-800 dark:border-blue-700' 
+                  : 'bg-gradient-to-r from-pink-100 to-purple-100 border-2 border-purple-200 dark:from-pink-800 dark:to-purple-800 dark:border-purple-700'
+              } rounded-xl p-6 shadow-sm mb-6`}
             >
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Nose size={20} className="text-purple-600" />
-                  <h3 className="text-lg font-semibold text-gray-800">Smell Report</h3>
+                  {isSecretMode ? <BarChart size={20} className="text-blue-600 dark:text-blue-400" /> : <Nose size={20} className="text-purple-600 dark:text-purple-400" />}
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                    {isSecretMode ? 'Difficulty Report' : 'Smell Report'}
+                  </h3>
                 </div>
-                <p className="text-purple-700 font-medium mb-1">
+                <p className={`${
+                  isSecretMode ? 'text-blue-700 dark:text-blue-300' : 'text-purple-700 dark:text-purple-300'
+                } font-medium mb-1`}>
                   Average: {smellInsight.avgLabel} ({stats.averageSmell}/5)
                 </p>
-                <p className="text-gray-600 text-sm">{smellInsight.insight}</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">{smellInsight.insight}</p>
                 {stats.stinkiestDay && stats.freshestDay && (
-                  <div className="mt-3 text-xs text-gray-500">
-                    <p>🤢 Stinkiest: {stats.stinkiestDay}</p>
-                    <p>😇 Freshest: {stats.freshestDay}</p>
+                  <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    <p>{isSecretMode ? '🎯 Hardest' : '🤢 Stinkiest'}: {stats.stinkiestDay}</p>
+                    <p>{isSecretMode ? '😇 Easiest' : '😇 Freshest'}: {stats.freshestDay}</p>
                   </div>
                 )}
               </div>
@@ -251,10 +316,10 @@ export function Dashboard() {
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <StatCard
-              title="Today's Farts"
+              title={isSecretMode ? "Today's Tasks" : "Today's Farts"}
               value={stats.todaysFarts}
-              icon={Activity}
-              color="text-purple-600"
+              icon={isSecretMode ? CheckSquare : Activity}
+              color={isSecretMode ? "text-blue-600" : "text-purple-600"}
               delay={0.3}
             />
             <StatCard
@@ -272,7 +337,7 @@ export function Dashboard() {
               delay={0.5}
             />
             <StatCard
-              title="Longest Fart"
+              title={isSecretMode ? "Longest Task" : "Longest Fart"}
               value={`${(stats.longestFart / 1000).toFixed(1)}s`}
               icon={TrendingUp}
               color="text-green-600"

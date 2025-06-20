@@ -99,17 +99,41 @@ export function useFartStats() {
       units <= 99  ? 'cow'      :
       units <= 199 ? 'hippo'    : 'elephant';
 
-    // Compute counts per tier
-    const counts = {
-      balloon:  Math.floor(units),
-      bike:     Math.max(1, Math.floor((units - 5)  / 5)),
-      soccer:   Math.max(1, Math.floor((units - 10) / 8)),
-      basket:   Math.max(1, Math.floor((units - 18) / 12)),
-      car:      Math.max(1, Math.floor((units - 30) / 20)),
-      cow:      Math.max(1, Math.floor((units - 50) / 50)),
-      hippo:    Math.max(1, Math.floor((units - 100) / 100)),
-      elephant: Math.max(1, Math.floor(units / 200)),
-    };
+    // Fixed count calculation - ensure it's never 0 when there are units
+    let count = 1; // Default minimum count
+    
+    if (units > 0) {
+      switch (tier) {
+        case 'balloon':
+          count = Math.max(1, Math.floor(units));
+          break;
+        case 'bike':
+          count = Math.max(1, Math.floor((units - 5) / 5) + 1);
+          break;
+        case 'soccer':
+          count = Math.max(1, Math.floor((units - 10) / 8) + 1);
+          break;
+        case 'basket':
+          count = Math.max(1, Math.floor((units - 18) / 12) + 1);
+          break;
+        case 'car':
+          count = Math.max(1, Math.floor((units - 30) / 20) + 1);
+          break;
+        case 'cow':
+          count = Math.max(1, Math.floor((units - 50) / 50) + 1);
+          break;
+        case 'hippo':
+          count = Math.max(1, Math.floor((units - 100) / 100) + 1);
+          break;
+        case 'elephant':
+          count = Math.max(1, Math.floor(units / 200) + 1);
+          break;
+        default:
+          count = 1;
+      }
+    } else {
+      count = 0; // Only 0 when no units at all
+    }
 
     // Fill % calculation for progress animation
     let fillPercent = 0;
@@ -203,7 +227,7 @@ export function useFartStats() {
       // Gas ladder stats
       units,
       tier,
-      count: counts[tier as keyof typeof counts],
+      count,
       fillPercent,
       // Smell stats
       averageSmell,

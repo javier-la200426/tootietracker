@@ -1,9 +1,16 @@
+export interface Location {
+  lat: number;
+  lng: number;
+  address?: string;
+}
+
 export interface FartEvent {
   id: string;
   timestamp: Date;
   durationMs: number;
   triggers?: Trigger[];
   smellIntensity?: SmellIntensity;
+  location?: Location;
 }
 
 export interface SmellIntensity {

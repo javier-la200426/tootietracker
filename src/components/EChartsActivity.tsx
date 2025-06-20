@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { useFartStore } from '../store/fartStore';
+import { useStealthMode } from '../contexts/StealthContext';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Point {
@@ -9,7 +10,9 @@ interface Point {
 }
 
 export default function EChartsActivity() {
+  const { isSecretMode } = useStealthMode();
   const events = useFartStore((s) => s.events);
+  const settings = useFartStore((s) => s.settings);
   const [period, setPeriod] = useState<'D' | 'W' | 'M' | '6M' | 'Y'>('W');
   const [offset, setOffset] = useState(0);
 
@@ -59,13 +62,13 @@ export default function EChartsActivity() {
     const HOUR = 60 * 60 * 1000;
 
     const dataPoints: Point[] = [];
-    let yLabel = 'Farts';
+    let yLabel = isSecretMode ? 'Tasks' : 'Farts';
 
     const addPoint = (date: string, value: number) => dataPoints.push({ date, value });
 
     switch (period) {
       case 'D': {
-        yLabel = 'Farts per Hour';
+        yLabel = isSecretMode ? 'Tasks per Hour' : 'Farts per Hour';
         const dayStart = getShiftedDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()), offset, DAY);
         for (let hour = 0; hour < 24; hour++) {
           const start = new Date(dayStart.getTime() + hour * HOUR);
@@ -79,7 +82,7 @@ export default function EChartsActivity() {
         break;
       }
       case 'W': {
-        yLabel = 'Farts per Day';
+        yLabel = isSecretMode ? 'Tasks per Day' : 'Farts per Day';
         for (let i = 6; i >= 0; i--) {
           const start = new Date(now.getTime() - (offset*7 + i) * DAY);
           const end = new Date(start.getTime() + DAY);
@@ -92,7 +95,7 @@ export default function EChartsActivity() {
         break;
       }
       case 'M': {
-        yLabel = 'Farts per Day';
+        yLabel = isSecretMode ? 'Tasks per Day' : 'Farts per Day';
         const days = 30;
         for (let i = days - 1; i >= 0; i--) {
           const start = new Date(now.getTime() - (offset*30 + i) * DAY);
@@ -106,7 +109,7 @@ export default function EChartsActivity() {
         break;
       }
       case '6M': {
-        yLabel = 'Farts per Week';
+        yLabel = isSecretMode ? 'Tasks per Week' : 'Farts per Week';
         const weeks = 26;
         for (let i = weeks - 1; i >= 0; i--) {
           const start = new Date(now.getTime() - (offset*26 + i) * 7 * DAY);
@@ -120,7 +123,7 @@ export default function EChartsActivity() {
         break;
       }
       case 'Y': {
-        yLabel = 'Farts per Month';
+        yLabel = isSecretMode ? 'Tasks per Month' : 'Farts per Month';
         const months = 12;
         for (let i = months - 1; i >= 0; i--) {
           const start = new Date(now.getFullYear(), now.getMonth() - (offset*12 + i), 1);
@@ -140,19 +143,50 @@ export default function EChartsActivity() {
       values: dataPoints.map((p) => p.value),
       yAxisLabel: yLabel,
     };
-  }, [events, period, offset]);
+  }, [events, period, offset, isSecretMode]);
 
   const option = {
-    tooltip: { trigger: 'axis' },
+    tooltip: { 
+      trigger: 'axis',
+      backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+      borderColor: settings.darkMode ? '#4b5563' : '#e5e7eb',
+      textStyle: {
+        color: settings.darkMode ? '#f3f4f6' : '#374151'
+      }
+    },
     grid: { left: 70, right: 20, top: 40, bottom: 80 },
     dataZoom: [
       { type: 'inside', xAxisIndex: 0, start: 0, end: 100 },
-      { type: 'slider', xAxisIndex: 0, start: 0, end: 100, height: 20, bottom: 10 },
+      { 
+        type: 'slider', 
+        xAxisIndex: 0, 
+        start: 0, 
+        end: 100, 
+        height: 20, 
+        bottom: 10,
+        backgroundColor: settings.darkMode ? '#374151' : '#f3f4f6',
+        fillerColor: settings.darkMode ? '#6b7280' : '#d1d5db',
+        borderColor: settings.darkMode ? '#4b5563' : '#e5e7eb',
+        handleStyle: {
+          color: settings.darkMode ? '#9ca3af' : '#6b7280'
+        },
+        textStyle: {
+          color: settings.darkMode ? '#d1d5db' : '#374151'
+        }
+      },
     ],
     xAxis: {
       type: 'category',
       data: labels,
       boundaryGap: false,
+      axisLabel: {
+        color: settings.darkMode ? '#9ca3af' : '#6b7280'
+      },
+      axisLine: {
+        lineStyle: {
+          color: settings.darkMode ? '#4b5563' : '#e5e7eb'
+        }
+      }
     },
     yAxis: {
       type: 'value',
@@ -162,9 +196,23 @@ export default function EChartsActivity() {
       nameTextStyle: {
         rotation: 90,
         fontSize: 16,
-        color: '#374151',
+        color: settings.darkMode ? '#d1d5db' : '#374151',
         fontWeight: 'bold'
       },
+      axisLabel: {
+        color: settings.darkMode ? '#9ca3af' : '#6b7280'
+      },
+      splitLine: {
+        lineStyle: {
+          color: settings.darkMode ? '#374151' : '#f3f4f6',
+          type: 'dashed'
+        }
+      },
+      axisLine: {
+        lineStyle: {
+          color: settings.darkMode ? '#4b5563' : '#e5e7eb'
+        }
+      }
     },
     series: [
       {
@@ -172,23 +220,32 @@ export default function EChartsActivity() {
         data: values,
         smooth: true,
         symbolSize: 6,
-        lineStyle: { width: 3, color: '#9333ea' },
-        areaStyle: { color: 'rgba(147,51,234,0.15)' },
+        lineStyle: { 
+          width: 3, 
+          color: isSecretMode ? '#3b82f6' : '#9333ea' 
+        },
+        areaStyle: { 
+          color: isSecretMode ? 'rgba(59,130,246,0.15)' : 'rgba(147,51,234,0.15)' 
+        },
       },
     ],
   } as echarts.EChartsCoreOption;
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
       {/* Period selector */}
       <div className="flex justify-center mb-6">
-        <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           {periods.map((p) => (
             <button
               key={p.key}
               onClick={() => setPeriod(p.key)}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                period === p.key ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                period === p.key 
+                  ? isSecretMode
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm' 
+                    : 'bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
               }`}
             >
               {p.label}
@@ -201,17 +258,17 @@ export default function EChartsActivity() {
       <div className="flex items-center justify-between mb-2">
         <button
           onClick={() => setOffset(offset + 1)}
-          className="p-1 rounded disabled:opacity-30"
+          className="p-1 rounded disabled:opacity-30 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <ChevronLeft />
         </button>
-        <span className="text-sm text-gray-600 select-none">
+        <span className="text-sm text-gray-600 dark:text-gray-300 select-none">
           {getNavigationText()}
         </span>
         <button
           onClick={() => setOffset(Math.max(0, offset - 1))}
           disabled={offset === 0}
-          className="p-1 rounded disabled:opacity-30"
+          className="p-1 rounded disabled:opacity-30 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <ChevronRight />
         </button>
@@ -230,4 +287,4 @@ export default function EChartsActivity() {
       />
     </div>
   );
-} 
+}

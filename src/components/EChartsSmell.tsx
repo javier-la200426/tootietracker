@@ -1,15 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { useFartStore } from '../store/fartStore';
+import { useStealthMode } from '../contexts/StealthContext';
 import * as echarts from 'echarts';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Point { date: string; value: number; }
 
-const smellLabels = ['😇', '😊', '😐', '😬', '🤢'];
-
 export default function EChartsSmell() {
+  const { isSecretMode } = useStealthMode();
   const events = useFartStore((s) => s.events);
+  const settings = useFartStore((s) => s.settings);
   const [period, setPeriod] = useState<'D' | 'W' | 'M' | '6M' | 'Y'>('W');
   const [offset, setOffset] = useState(0);
   React.useEffect(() => setOffset(0), [period]);
@@ -139,17 +140,56 @@ export default function EChartsSmell() {
     return { labels: pts.map((p) => p.date), values: pts.map((p) => p.value) };
   }, [events, period, offset]);
 
+  const smellLabels = isSecretMode 
+    ? ['😇', '😊', '😐', '😬', '🤢']
+    : ['😇', '😊', '😐', '😬', '🤢'];
+
   const option = {
-    tooltip: { trigger: 'axis' },
+    tooltip: { 
+      trigger: 'axis',
+      backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+      borderColor: settings.darkMode ? '#4b5563' : '#e5e7eb',
+      textStyle: {
+        color: settings.darkMode ? '#f3f4f6' : '#374151'
+      }
+    },
     grid: { left: 70, right: 20, top: 40, bottom: 80 },
     dataZoom: [
       { type: 'inside', xAxisIndex: 0, start: 0, end: 100 },
-      { type: 'slider', xAxisIndex: 0, start: 0, end: 100, height: 20, bottom: 10 },
+      { 
+        type: 'slider', 
+        xAxisIndex: 0, 
+        start: 0, 
+        end: 100, 
+        height: 20, 
+        bottom: 10,
+        backgroundColor: settings.darkMode ? '#374151' : '#f3f4f6',
+        fillerColor: settings.darkMode ? '#6b7280' : '#d1d5db',
+        borderColor: settings.darkMode ? '#4b5563' : '#e5e7eb',
+        handleStyle: {
+          color: settings.darkMode ? '#9ca3af' : '#6b7280'
+        },
+        textStyle: {
+          color: settings.darkMode ? '#d1d5db' : '#374151'
+        }
+      },
     ],
-    xAxis: { type: 'category', data: labels, boundaryGap: false },
+    xAxis: { 
+      type: 'category', 
+      data: labels, 
+      boundaryGap: false,
+      axisLabel: {
+        color: settings.darkMode ? '#9ca3af' : '#6b7280'
+      },
+      axisLine: {
+        lineStyle: {
+          color: settings.darkMode ? '#4b5563' : '#e5e7eb'
+        }
+      }
+    },
     yAxis: { 
       type: 'value', 
-      name: 'Smell Level', 
+      name: isSecretMode ? 'Difficulty Level' : 'Smell Level', 
       min: 0, 
       max: 5,
       nameLocation: 'middle',
@@ -157,20 +197,26 @@ export default function EChartsSmell() {
       nameTextStyle: {
         rotation: 90,
         fontSize: 16,
-        color: '#374151',
+        color: settings.darkMode ? '#d1d5db' : '#374151',
         fontWeight: 'bold'
       },
       axisLabel: {
         formatter: function(value: number) {
           return smellLabels[value] || '';
         },
-        fontSize: 16
+        fontSize: 16,
+        color: settings.darkMode ? '#9ca3af' : '#6b7280'
       },
       splitLine: {
         show: true,
         lineStyle: {
-          color: '#f3f4f6',
+          color: settings.darkMode ? '#374151' : '#f3f4f6',
           type: 'dashed'
+        }
+      },
+      axisLine: {
+        lineStyle: {
+          color: settings.darkMode ? '#4b5563' : '#e5e7eb'
         }
       }
     },
@@ -180,22 +226,31 @@ export default function EChartsSmell() {
         data: values,
         smooth: true,
         symbolSize: 6,
-        lineStyle: { width: 3, color: '#ef4444' },
-        areaStyle: { color: 'rgba(239,68,68,0.15)' },
+        lineStyle: { 
+          width: 3, 
+          color: isSecretMode ? '#3b82f6' : '#ef4444' 
+        },
+        areaStyle: { 
+          color: isSecretMode ? 'rgba(59,130,246,0.15)' : 'rgba(239,68,68,0.15)' 
+        },
       },
     ],
   } as echarts.EChartsCoreOption;
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
       <div className="flex justify-center mb-6">
-        <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           {periods.map((p) => (
             <button
               key={p.key}
               onClick={() => setPeriod(p.key)}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                period === p.key ? 'bg-white text-red-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                period === p.key 
+                  ? isSecretMode
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm' 
+                    : 'bg-white dark:bg-gray-600 text-red-600 dark:text-red-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
               }`}
             >
               {p.label}
@@ -205,13 +260,20 @@ export default function EChartsSmell() {
       </div>
       {/* Navigation Arrows */}
       <div className="flex items-center justify-between mb-2">
-        <button onClick={() => setOffset(offset + 1)} className="p-1 rounded disabled:opacity-30">
+        <button 
+          onClick={() => setOffset(offset + 1)} 
+          className="p-1 rounded disabled:opacity-30 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
           <ChevronLeft />
         </button>
-        <span className="text-sm text-gray-600 select-none">
+        <span className="text-sm text-gray-600 dark:text-gray-300 select-none">
           {getNavigationText()}
         </span>
-        <button onClick={() => setOffset(Math.max(0, offset - 1))} disabled={offset === 0} className="p-1 rounded disabled:opacity-30">
+        <button 
+          onClick={() => setOffset(Math.max(0, offset - 1))} 
+          disabled={offset === 0} 
+          className="p-1 rounded disabled:opacity-30 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
           <ChevronRight />
         </button>
       </div>
@@ -228,4 +290,4 @@ export default function EChartsSmell() {
       />
     </div>
   );
-} 
+}

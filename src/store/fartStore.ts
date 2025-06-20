@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { FartEvent, AppSettings, FoodTrigger, Trigger, Preset, SmellIntensity } from '../types';
+import type { FartEvent, AppSettings, FoodTrigger, Trigger, Preset, SmellIntensity, Location } from '../types';
 
 interface FartStore {
   events: FartEvent[];
@@ -9,6 +9,7 @@ interface FartStore {
   // Event actions
   addEvent: (event: Omit<FartEvent, 'id'>) => string;
   updateEventTriggers: (eventId: string, triggers: Trigger[], smellIntensity?: SmellIntensity | null) => void;
+  updateEventLocation: (eventId: string, location: Location) => void;
   deleteEvent: (id: string) => void;
   clearAllEvents: () => void;
   
@@ -93,6 +94,18 @@ export const useFartStore = create<FartStore>()(
         // Increment trigger counts
         triggers.forEach((trigger) => {
           get().incrementTriggerCount(trigger.id);
+        });
+      },
+
+      updateEventLocation: (eventId, location) => {
+        set((state) => {
+          const updatedEvents = state.events.map((event) => {
+            if (event.id === eventId) {
+              return { ...event, location };
+            }
+            return event;
+          });
+          return { events: updatedEvents };
         });
       },
 

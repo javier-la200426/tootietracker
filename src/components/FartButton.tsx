@@ -4,8 +4,11 @@ import { useFartStore } from '../store/fartStore';
 import { useFartIntensity } from '../hooks/useFartIntensity';
 import { TriggerModal } from './TriggerModal';
 import { fartAudio } from '../utils/fartAudio';
+import { useStealthMode } from '../contexts/StealthContext';
+import { Eye, EyeOff } from 'lucide-react';
 
 export function FartButton() {
+  const { isSecretMode, toggleSecretMode } = useStealthMode();
   const [isPressed, setIsPressed] = useState(false);
   const [duration, setDuration] = useState(0);
   const [showTriggerModal, setShowTriggerModal] = useState(false);
@@ -14,14 +17,13 @@ export function FartButton() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const soundUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const soundStartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasRecordedRef = useRef<boolean>(false); // Track if we've already recorded for this interaction
+  const hasRecordedRef = useRef<boolean>(false);
   const addEvent = useFartStore((state) => state.addEvent);
   const settings = useFartStore((state) => state.settings);
   const updateSettings = useFartStore((state) => state.updateSettings);
   const { getIntensity, getIntensityLabel } = useFartIntensity();
 
   const recordFart = useCallback((durationMs: number) => {
-    // Prevent double recording
     if (hasRecordedRef.current) return;
     hasRecordedRef.current = true;
 
@@ -29,13 +31,8 @@ export function FartButton() {
       timestamp: new Date(),
       durationMs,
     };
-    console.log('Recording fart event (before addEvent):', newEvent); // Debug log
 
-    // Add the event to the store and get the real ID
     const realEventId = addEvent(newEvent);
-    console.log('Event ID returned from addEvent:', realEventId); // Debug log
-
-    // Show trigger modal after a short delay
     setLastEventId(realEventId);
     setTimeout(() => {
       setShowTriggerModal(true);
@@ -45,32 +42,30 @@ export function FartButton() {
   const startFart = useCallback(() => {
     setIsPressed(true);
     startTimeRef.current = Date.now();
-    hasRecordedRef.current = false; // Reset recording flag
+    hasRecordedRef.current = false;
     setDuration(0);
     
-    // Only begin the looping long-fart after a short hold (250 ms)
-    if (settings.soundEffects) {
+    // Only play sounds in normal mode (not secret mode)
+    if (settings.soundEffects && !isSecretMode) {
       soundStartTimeoutRef.current = setTimeout(() => {
         fartAudio.startFartSound().catch(console.warn);
 
-        // Start sound-update loop once the long fart is playing
         soundUpdateIntervalRef.current = setInterval(() => {
           if (startTimeRef.current) {
             const currentDuration = Date.now() - startTimeRef.current;
             fartAudio.updateFartSound(currentDuration);
           }
         }, 50);
-      }, 500); // delay in ms
+      }, 500);
     }
 
-    // Update duration display
     intervalRef.current = setInterval(() => {
       if (startTimeRef.current) {
         const currentDuration = Date.now() - startTimeRef.current;
         setDuration(currentDuration);
       }
     }, 10);
-  }, [settings.soundEffects]);
+  }, [settings.soundEffects, isSecretMode]);
 
   const endFart = useCallback(() => {
     if (!startTimeRef.current) return;
@@ -79,17 +74,15 @@ export function FartButton() {
     setIsPressed(false);
     setDuration(0);
     
-    // Cancel pending start-sound timeout or stop currently playing sound
-    if (settings.soundEffects) {
+    // Only play sounds in normal mode (not secret mode)
+    if (settings.soundEffects && !isSecretMode) {
       if (soundStartTimeoutRef.current) {
         clearTimeout(soundStartTimeoutRef.current);
         soundStartTimeoutRef.current = null;
       }
-      // This is safe to call even if the long sound never started
       fartAudio.stopFartSound();
     }
     
-    // Clear intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -100,20 +93,18 @@ export function FartButton() {
       soundUpdateIntervalRef.current = null;
     }
     
-    // Play quick-fart sound for presses shorter than the long-sound delay
-    if (settings.soundEffects && finalDuration < 500) {
+    // Only play quick fart sound in normal mode (not secret mode)
+    if (settings.soundEffects && !isSecretMode && finalDuration < 500) {
       fartAudio.playQuickFart().catch(console.warn);
     }
     
-    // Only record if we haven't already recorded
     if (!hasRecordedRef.current) {
       recordFart(finalDuration);
     }
     
     startTimeRef.current = null;
-  }, [recordFart, settings.soundEffects]);
+  }, [recordFart, settings.soundEffects, isSecretMode]);
 
-  // We no longer rely on onClick for quick sounds – see endFart logic
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -153,7 +144,6 @@ export function FartButton() {
     updateSettings({ soundEffects: !settings.soundEffects });
   }, [settings.soundEffects, updateSettings]);
 
-  // Cleanup on unmount
   React.useEffect(() => {
     return () => {
       if (intervalRef.current) {
@@ -165,7 +155,6 @@ export function FartButton() {
     };
   }, []);
 
-  // Add global mouse up listener to handle cases where mouse is released outside the button
   React.useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isPressed) {
@@ -198,30 +187,61 @@ export function FartButton() {
   return (
     <>
       <div className="flex flex-col items-center space-y-6">
-        {/* Sound Toggle Button */}
-        <motion.button
-          onClick={toggleSound}
-          whileTap={{ scale: 0.95 }}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${
-            settings.soundEffects 
-              ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
-              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-          }`}
-          title={settings.soundEffects ? 'Sound ON - Click to turn off' : 'Sound OFF - Click to turn on'}
-        >
-          <span className="text-lg">
-            {settings.soundEffects ? '🔊' : '🔇'}
-          </span>
-          <span className="text-sm font-medium">
-            {settings.soundEffects ? 'Sound ON' : 'Sound OFF'}
-          </span>
-        </motion.button>
+        {/* Control Buttons Row */}
+        <div className="flex items-center space-x-4">
+          {/* Secret Mode Switch - Shows what mode you'll switch TO */}
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              {isSecretMode ? <EyeOff size={18} className="text-gray-700 dark:text-gray-200" /> : <Eye size={18} className="text-gray-700 dark:text-gray-200" />}
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                {isSecretMode ? 'Secret Mode' : 'Secret Mode'}
+              </span>
+            </div>
+            <button
+              onClick={toggleSecretMode}
+              className={`w-12 h-6 rounded-full transition-colors ${
+                isSecretMode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+              title={isSecretMode ? 'Switch to Normal Mode' : 'Switch to Secret Mode'}
+            >
+              <div
+                className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                  isSecretMode ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Sound Toggle Button - Only show in normal mode (not secret mode) */}
+          {!isSecretMode && (
+            <motion.button
+              onClick={toggleSound}
+              whileTap={{ scale: 0.95 }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${
+                settings.soundEffects 
+                  ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-800 dark:text-purple-200 dark:hover:bg-purple-700'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
+              }`}
+              title={settings.soundEffects ? 'Sound ON - Click to turn off' : 'Sound OFF - Click to turn on'}
+            >
+              <span className="text-lg">
+                {settings.soundEffects ? '🔊' : '🔇'}
+              </span>
+              <span className="text-sm font-medium">
+                {settings.soundEffects ? 'Sound ON' : 'Sound OFF'}
+              </span>
+            </motion.button>
+          )}
+        </div>
 
         <div className="relative">
           <motion.div
             className={`
               w-48 h-48 rounded-full font-bold text-white text-2xl
-              bg-gradient-to-br from-purple-500 to-blue-600
+              ${isSecretMode 
+                ? 'bg-gradient-to-br from-blue-500 to-indigo-600' 
+                : 'bg-gradient-to-br from-purple-500 to-blue-600'
+              }
               shadow-lg active:shadow-xl
               flex items-center justify-center
               transition-all duration-200
@@ -251,20 +271,26 @@ export function FartButton() {
               WebkitTouchCallout: 'none'
             }}
           >
-            <span className="text-4xl pointer-events-none">💨</span>
+            <span className="text-4xl pointer-events-none">
+              {isSecretMode ? '✅' : '💨'}
+            </span>
           </motion.div>
 
           {/* Ripple effects */}
           {isPressed && (
             <>
               <motion.div
-                className="absolute inset-0 rounded-full bg-purple-300 opacity-30 pointer-events-none"
+                className={`absolute inset-0 rounded-full ${
+                  isSecretMode ? 'bg-blue-300' : 'bg-purple-300'
+                } opacity-30 pointer-events-none`}
                 initial={{ scale: 1 }}
                 animate={{ scale: 1.8, opacity: 0 }}
                 transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
               />
               <motion.div
-                className="absolute inset-0 rounded-full bg-blue-300 opacity-20 pointer-events-none"
+                className={`absolute inset-0 rounded-full ${
+                  isSecretMode ? 'bg-indigo-300' : 'bg-blue-300'
+                } opacity-20 pointer-events-none`}
                 initial={{ scale: 1 }}
                 animate={{ scale: 2.2, opacity: 0 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.3 }}
@@ -274,8 +300,13 @@ export function FartButton() {
         </div>
 
         <div className="text-center space-y-2">
-          <p className="text-gray-600 font-medium">
-            {isPressed ? 'Keep holding...' : 'Hold to log fart'}
+          <p className="text-gray-600 dark:text-gray-300 font-medium">
+            {isPressed 
+              ? 'Keep holding...' 
+              : isSecretMode 
+                ? 'Hold to log task' 
+                : 'Hold to log fart'
+            }
           </p>
           
           {isPressed && (
@@ -284,11 +315,13 @@ export function FartButton() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-1"
             >
-              <p className="text-lg font-bold text-purple-600">
+              <p className={`text-lg font-bold ${
+                isSecretMode ? 'text-blue-600 dark:text-blue-400' : 'text-purple-600 dark:text-purple-400'
+              }`}>
                 {(duration / 1000).toFixed(1)}s
               </p>
-              <p className="text-sm text-gray-500">
-                {currentIntensity} {intensityLabel}
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {currentIntensity} {isSecretMode ? 'Effort Level' : intensityLabel}
               </p>
             </motion.div>
           )}
